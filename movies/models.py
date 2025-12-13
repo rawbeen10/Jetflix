@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Movie(models.Model):
     GENRE_CHOICES = [
@@ -24,6 +26,31 @@ class Movie(models.Model):
     review_stars = models.FloatField(default=0.0, help_text='Average rating out of 5')
     views = models.PositiveIntegerField(default=0)
     is_published = models.BooleanField(default=True)
+    
+class Watchlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='watchlist')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='watchlisted_by')
+    added_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'movie')  # Prevent duplicate entries
+        ordering = ['-added_on']
+        
+class Review(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text='Rating from 1 to 5 stars'
+    )
+    review_text = models.TextField(help_text='Your review')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'movie')  # One review per user per movie
+        ordering = ['-created_at']
 
     def __str__(self):
-        return self.title
+        return f"{self.user.username} - {self.movie.title}"
+

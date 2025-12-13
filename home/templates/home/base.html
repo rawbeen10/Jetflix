@@ -20,7 +20,7 @@
         <!-- Navigation Links for logged in users -->
         <div class="nav-links">
           <a href="{% url 'home' %}" class="nav-link">Home</a>
-          {% comment %} <a href="{% url 'movies' %}" class="nav-link">Movies</a> {% endcomment %}
+          <a href="{% url 'movies:landing' %}" class="nav-link">Movies</a>
         </div>
         {% endif %}
       </div>
@@ -37,7 +37,7 @@
           </a>
           
           <!-- Watchlist -->
-          <a href="{% url 'watchlist' %}" class="nav-icon" title="Watchlist">
+          <a href="{% url 'movies:watchlist' %}" class="nav-icon" title="Watchlist">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
@@ -61,8 +61,7 @@
         {% else %}
           <!-- Links for logged out users -->
           <div class="nav-links">
-            <a href="{% url 'home' %}" class="nav-link">Home</a>
-            <a href="{% url 'movies' %}" class="nav-link">Movies</a>
+      
             <a href="{% url 'login' %}" class="nav-link-btn">Login</a>
           </div>
         {% endif %}

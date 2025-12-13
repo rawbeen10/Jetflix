@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.admin.views.decorators import staff_member_required
 from .forms import MovieForm
+from movies.models import Movie
+
 
 def admin_login(request):
     if request.method == 'POST':
@@ -39,3 +41,9 @@ def add_movie(request):
         form = MovieForm()
 
     return render(request, 'adminpanel/add_movie.html', {'form': form})
+
+@staff_member_required
+
+def all_movies(request):
+    movies = Movie.objects.all()  # Show all movies, published or not
+    return render(request, 'adminpanel/all_movies.html', {'movies': movies})

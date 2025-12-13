@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - JetFlix</title>
+  <style>
+    /* Basic reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background-color: #111;
+      color: #fff;
+      padding: 20px;
+      flex-shrink: 0;
+    }
+    .sidebar h2 { font-size: 20px; margin-bottom: 20px; color: #e50914; }
+    .sidebar a {
+      display: block;
+      color: #fff;
+      text-decoration: none;
+      margin-bottom: 10px;
+      padding: 8px 5px;
+      border-radius: 4px;
+    }
+    .sidebar a:hover { background-color: #e50914; }
+
+    /* Main content */
+    .main-content {
+      flex-grow: 1;
+      padding: 30px;
+      background-color: #1a1a1a;
+      color: #fff;
+    }
+
+    /* Table styling */
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; text-align: left; border: 1px solid #333; }
+    th { background-color: #222; }
+    tr:nth-child(even) { background-color: #2a2a2a; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>JetFlix Admin</h2>
+    <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+    <a href="{% url 'admin-all-movies' %}">All Movies</a>
+    <a href="{% url 'add_movie' %}">Add Movie</a>
+    <!-- Add more links if needed -->
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+    {% block content %}
+    <!-- Page-specific content will go here -->
+    {% endblock %}
+  </div>
+
+</body>
+</html>

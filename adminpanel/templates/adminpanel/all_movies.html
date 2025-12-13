@@ -1,0 +1,35 @@
+{% extends 'adminpanel/base.html' %}
+{% block content %}
+<h2>All Movies</h2>
+
+<table border="1" cellpadding="10" cellspacing="0">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Year</th>
+            <th>Genre</th>
+            <th>Cast</th>
+            <th>Length</th>
+            <th>Published</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for movie in movies %}
+        <tr>
+            <td>{{ movie.id }}</td>
+            <td>{{ movie.title }}</td>
+            <td>{{ movie.year }}</td>
+            <td>{{ movie.genre }}</td>
+            <td>{{ movie.cast }}</td>
+            <td>{{ movie.movie_length }}</td>
+            <td>{{ movie.is_published }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No movies found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,730 @@
+{% extends 'home/base.html' %}
+{% load static %}
+
+{% block title %}Home - JetFlix{% endblock %}
+
+{% block main_class %}home-page-content{% endblock %}
+
+{% block content %}
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #0f0f0f;
+      color: #ffffff;
+    }
+
+    /* Hero Section */
+    .hero {
+      height: 90vh;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3)),
+        url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1600&q=80');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      padding: 0 60px;
+    }
+
+    .hero-content { max-width: 600px; }
+    .hero h1 { font-size: 52px; font-weight: 700; margin-bottom: 20px; }
+    .hero p { font-size: 18px; line-height: 1.6; margin-bottom: 30px; color: #e5e5e5; }
+    .hero button {
+      padding: 14px 30px; font-size: 16px; font-weight: 600; background-color: #e50914;
+      border: none; border-radius: 6px; color: #ffffff; cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .hero button:hover { background-color: #f6121d; }
+
+    /* Sections */
+    .section { padding: 40px 60px; }
+    .section h2 { font-size: 26px; margin-bottom: 20px; }
+
+    /* Movie Grid */
+    .movies {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .movie-card {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background-color: #1a1a1a;
+      aspect-ratio: 2/3;
+    }
+
+    .movie-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .movie-card:hover {
+      transform: scale(1.05);
+      z-index: 10;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    }
+
+    .movie-card:hover img {
+      transform: scale(1.1);
+    }
+
+    .movie-card-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
+      padding: 15px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .movie-card:hover .movie-card-overlay {
+      opacity: 1;
+    }
+
+    .movie-card-overlay h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #fff;
+    }
+
+    .movie-card-overlay p {
+      font-size: 13px;
+      color: #b3b3b3;
+    }
+
+    .movie-genre {
+      display: inline-block;
+      background-color: rgba(229, 9, 20, 0.8);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-top: 5px;
+    }
+
+    /* Notification styles */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      padding: 16px 24px;
+      border-radius: 8px;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      font-weight: 500;
+      animation: slideIn 0.3s ease-out;
+    }
+    .notification.info { background: #2196F3; }
+    .notification.error { background: #e50914; }
+    .notification.success { background: #4CAF50; }
+
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(400px); opacity: 0; }
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      overflow-y: auto;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal.active {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background-color: #181818;
+      border-radius: 12px;
+      max-width: 850px;
+      width: 100%;
+      position: relative;
+      animation: slideUp 0.3s ease;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.8);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #181818;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: background-color 0.2s;
+    }
+
+    .modal-close:hover {
+      background-color: #333;
+    }
+
+    .modal-hero {
+      position: relative;
+      height: 400px;
+      background-size: cover;
+      background-position: center;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .modal-hero-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, #181818, transparent);
+      padding: 40px;
+    }
+
+    .modal-title {
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .modal-meta {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      font-size: 14px;
+      color: #b3b3b3;
+    }
+
+    .modal-rating {
+      color: #46d369;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      padding: 30px 40px 40px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      padding: 12px 28px;
+      background-color: #fff;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover {
+      background-color: rgba(255, 255, 255, 0.85);
+    }
+
+    .btn-secondary {
+      padding: 12px 28px;
+      background-color: rgba(109, 109, 110, 0.7);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(109, 109, 110, 0.4);
+    }
+
+    .modal-description {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 25px;
+      color: #e5e5e5;
+    }
+
+    .modal-info {
+      display: grid;
+      gap: 15px;
+      font-size: 14px;
+    }
+
+    .modal-info-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-info-label {
+      color: #777;
+      min-width: 80px;
+    }
+
+    .modal-info-value {
+      color: #fff;
+    }
+
+    /* Video Player Modal */
+    .video-player-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.95);
+      z-index: 2000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .video-player-modal.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .video-player-header {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .video-player-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .video-player-close {
+      background-color: transparent;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .video-player-close:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-color: #fff;
+    }
+
+    .video-player-container {
+      width: 100%;
+      max-width: 1200px;
+      background-color: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    .video-player-container video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .hero { padding: 0 25px; height: 70vh; }
+      .hero h1 { font-size: 38px; }
+      .section { padding: 30px 25px; }
+      .movies {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+      }
+      .modal-hero { height: 250px; }
+      .modal-title { font-size: 28px; }
+      .modal-body { padding: 20px; }
+      .video-player-title { font-size: 18px; }
+    }
+  </style>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Unlimited Movies, One Destination</h1>
+      <p>Explore trending movies, personalized recommendations, and your favorite content anytime on JetFlix.</p>
+      {% if user.is_authenticated %}
+        <button onclick="window.location.href='{% url 'movies:landing' %}'">▶ Watch Now</button>
+      {% else %}
+        <button onclick="handleLoginRequired('browse')">▶ Watch Now</button>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Recently Added Movies -->
+  <section class="section">
+    <h2>Recently Added</h2>
+    <div class="movies">
+      {% if movies %}
+        {% for movie in movies %}
+          <div class="movie-card" onclick="openModal({{ forloop.counter0 }})">
+            {% if movie.thumbnail %}
+              <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
+            {% else %}
+              <img src="https://via.placeholder.com/200x300?text=No+Image" alt="{{ movie.title }}">
+            {% endif %}
+            <div class="movie-card-overlay">
+              <h3>{{ movie.title }}</h3>
+              <p>{{ movie.year }}</p>
+              <span class="movie-genre">{{ movie.genre }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:#ccc;">No movies available yet.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Trending (Static placeholders) -->
+  <section class="section">
+    <h2>Trending Now</h2>
+    <div class="movies">
+      <div class="movie-card" onclick="handleLoginRequired('browse')">
+        <img src="https://source.unsplash.com/300x450/?movie" />
+        <div class="movie-card-overlay">
+          <h3>Action Blockbuster</h3>
+          <p>2024</p>
+          <span class="movie-genre">Action</span>
+        </div>
+      </div>
+      <div class="movie-card" onclick="handleLoginRequired('browse')">
+        <img src="https://source.unsplash.com/301x450/?cinema" />
+        <div class="movie-card-overlay">
+          <h3>Drama Classic</h3>
+          <p>2024</p>
+          <span class="movie-genre">Drama</span>
+        </div>
+      </div>
+      <div class="movie-card" onclick="handleLoginRequired('browse')">
+        <img src="https://source.unsplash.com/302x450/?film" />
+        <div class="movie-card-overlay">
+          <h3>Thriller Night</h3>
+          <p>2024</p>
+          <span class="movie-genre">Thriller</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recommended -->
+  <section class="section">
+    <h2>Recommended For You</h2>
+    <div class="movies">
+      <div class="movie-card" onclick="handleLoginRequired('browse')">
+        <img src="https://source.unsplash.com/305x450/?drama-movie" />
+        <div class="movie-card-overlay">
+          <h3>Romantic Story</h3>
+          <p>2024</p>
+          <span class="movie-genre">Romance</span>
+        </div>
+      </div>
+      <div class="movie-card" onclick="handleLoginRequired('browse')">
+        <img src="https://source.unsplash.com/306x450/?romance-movie" />
+        <div class="movie-card-overlay">
+          <h3>Comedy Hit</h3>
+          <p>2024</p>
+          <span class="movie-genre">Comedy</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Movie Details Modal -->
+  <div class="modal" id="movieModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      
+      <div class="modal-hero" id="modalHero">
+        <div class="modal-hero-overlay">
+          <h1 class="modal-title" id="modalTitle">Movie Title</h1>
+          <div class="modal-meta">
+            <span class="modal-rating" id="modalRating">★ 0.0</span>
+            <span id="modalYear">2024</span>
+            <span id="modalLength">Unknown</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-actions">
+          <button class="btn-primary" onclick="playMovie()">
+            <span>▶</span> Play
+          </button>
+          <button class="btn-secondary" onclick="addToWatchlist()">
+            <span>+</span> My List
+          </button>
+        </div>
+
+        <p class="modal-description" id="modalDescription">
+          Movie description goes here...
+        </p>
+
+        <div class="modal-info">
+          <div class="modal-info-row">
+            <span class="modal-info-label">Cast:</span>
+            <span class="modal-info-value" id="modalCast">Unknown</span>
+          </div>
+          <div class="modal-info-row">
+            <span class="modal-info-label">Genre:</span>
+            <span class="modal-info-value" id="modalGenre">Action</span>
+          </div>
+          <div class="modal-info-row">
+            <span class="modal-info-label">Views:</span>
+            <span class="modal-info-value" id="modalViews">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Player Modal -->
+  <div class="video-player-modal" id="videoPlayerModal">
+    <div class="video-player-header">
+      <h2 class="video-player-title" id="videoPlayerTitle">Movie Title</h2>
+      <button class="video-player-close" onclick="closeVideoPlayer()">&times;</button>
+    </div>
+    <div class="video-player-container">
+      <video id="videoPlayer" controls autoplay>
+        <source src="" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  </div>
+
+  <script>
+    const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+    
+    const movies = [
+      {% for movie in movies %}
+      {
+        id: {{ movie.id }},
+        title: "{{ movie.title|escapejs }}",
+        year: {{ movie.year }},
+        description: "{{ movie.description|escapejs }}",
+        thumbnail: "{% if movie.thumbnail %}{{ movie.thumbnail.url }}{% else %}https://via.placeholder.com/200x300?text=No+Image{% endif %}",
+        video: "{% if movie.video %}{{ movie.video.url }}{% endif %}",
+        genre: "{{ movie.genre }}",
+        cast: "{{ movie.cast|escapejs }}",
+        length: "{{ movie.movie_length }}",
+        rating: {{ movie.review_stars }},
+        views: {{ movie.views }}
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    let currentMovieId = null;
+
+    function openModal(index) {
+      if (!isAuthenticated) {
+        handleLoginRequired('movie', movies[index].id);
+        return;
+      }
+
+      const movie = movies[index];
+      currentMovieId = movie.id;
+      const modal = document.getElementById('movieModal');
+      
+      document.getElementById('modalHero').style.backgroundImage = `linear-gradient(to top, #181818 0%, transparent 100%), url('${movie.thumbnail}')`;
+      document.getElementById('modalTitle').textContent = movie.title;
+      document.getElementById('modalRating').textContent = `★ ${movie.rating.toFixed(1)}`;
+      document.getElementById('modalYear').textContent = movie.year;
+      document.getElementById('modalLength').textContent = movie.length;
+      document.getElementById('modalDescription').textContent = movie.description;
+      document.getElementById('modalCast').textContent = movie.cast;
+      document.getElementById('modalGenre').textContent = movie.genre;
+      document.getElementById('modalViews').textContent = formatViews(movie.views);
+      
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('movieModal');
+      modal.classList.remove('active');
+      document.body.style.overflow = 'auto';
+      currentMovieId = null;
+    }
+
+    function playMovie() {
+      if (!isAuthenticated) {
+        closeModal();
+        handleLoginRequired('movie', currentMovieId);
+        return;
+      }
+
+      const movie = movies.find(m => m.id === currentMovieId);
+      if (movie && movie.video) {
+        openVideoPlayer(movie);
+      } else {
+        showNotification('Video not available', 'error');
+      }
+    }
+
+    function openVideoPlayer(movie) {
+      const videoModal = document.getElementById('videoPlayerModal');
+      const videoPlayer = document.getElementById('videoPlayer');
+      const videoTitle = document.getElementById('videoPlayerTitle');
+      
+      videoTitle.textContent = movie.title;
+      videoPlayer.src = movie.video;
+      videoModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      
+      closeModal();
+    }
+
+    function closeVideoPlayer() {
+      const videoModal = document.getElementById('videoPlayerModal');
+      const videoPlayer = document.getElementById('videoPlayer');
+      
+      videoPlayer.pause();
+      videoPlayer.src = '';
+      videoModal.classList.remove('active');
+      document.body.style.overflow = 'auto';
+    }
+
+    function addToWatchlist() {
+      if (!isAuthenticated) {
+        closeModal();
+        handleLoginRequired('watchlist');
+        return;
+      }
+      showNotification('Added to your watchlist!', 'success');
+    }
+
+    function handleLoginRequired(action, movieId = null) {
+      if (isAuthenticated) {
+        if (action === 'browse') {
+          window.location.href = "{% url 'movies:landing' %}";
+        }
+        return;
+      }
+
+      showNotification('Please login to watch movies', 'info');
+      
+      if (movieId) {
+        sessionStorage.setItem('movieToWatch', movieId);
+      }
+      if (action) {
+        sessionStorage.setItem('redirectAfterLogin', action);
+      }
+      
+      setTimeout(() => {
+        const nextUrl = encodeURIComponent("{% url 'movies:landing' %}");
+        window.location.href = `{% url 'login' %}?next=${nextUrl}`;
+      }, 1200);
+    }
+
+    function showNotification(message, type) {
+      const existing = document.querySelector('.notification');
+      if (existing) existing.remove();
+
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    function formatViews(views) {
+      if (views >= 1000000) {
+        return (views / 1000000).toFixed(1) + 'M views';
+      } else if (views >= 1000) {
+        return (views / 1000).toFixed(1) + 'K views';
+      }
+      return views + ' views';
+    }
+
+    document.getElementById('movieModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeModal();
+        closeVideoPlayer();
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (isAuthenticated) {
+        const movieToWatch = sessionStorage.getItem('movieToWatch');
+        if (movieToWatch) {
+          sessionStorage.removeItem('movieToWatch');
+          const index = movies.findIndex(m => m.id == movieToWatch);
+          if (index !== -1) {
+            openModal(index);
+          }
+        }
+      }
+    });
+  </script>
+{% endblock %}
