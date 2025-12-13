@@ -640,10 +640,37 @@
 
     const movie = movies.find(m => m.id === currentMovieId);
     if (movie && movie.video) {
+      // Increment view count before playing
+      incrementViewCount(currentMovieId);
       openVideoPlayer(movie);
     } else {
       showNotification('Video not available', 'error');
     }
+  }
+
+  function incrementViewCount(movieId) {
+    fetch("{% url 'movies:increment_view' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ movie_id: movieId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        console.log('View count updated:', data.views);
+        // Update the local view count
+        const movie = movies.find(m => m.id === movieId);
+        if (movie) {
+          movie.views = data.views;
+          // Update the view display in modal if still open
+          document.getElementById('modalViews').textContent = formatViews(data.views);
+        }
+      }
+    })
+    .catch(error => console.error('Error incrementing view:', error));
   }
 
   function openVideoPlayer(movie) {
