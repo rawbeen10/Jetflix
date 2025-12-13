@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JetFlix Admin Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f0f0f;
+      color: white;
+    }
+
+    .sidebar {
+      width: 220px;
+      height: 100vh;
+      background: #111;
+      position: fixed;
+      padding: 20px;
+    }
+
+    .sidebar h2 {
+      color: #e50914;
+      text-align: center;
+    }
+
+    .sidebar a {
+      display: block;
+      color: #ccc;
+      text-decoration: none;
+      margin: 15px 0;
+    }
+
+    .sidebar a:hover {
+      color: white;
+    }
+
+    .main {
+      margin-left: 240px;
+      padding: 30px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .card h3 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .card p {
+      font-size: 28px;
+      color: #e50914;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>JetFlix</h2>
+    <a href="#">Dashboard</a>
+    <a href="#">Movies</a>
+    <a href="{% url 'add_movie' %}">Add Movie</a>
+
+    <a href="#">Users</a>
+    <a href="#">Logout</a>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <h1>Admin Dashboard</h1>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Total Movies</h3>
+        <p>{{ total_movies }}</p>
+      </div>
+
+      <div class="card">
+        <h3>Total Users</h3>
+        <p>{{ total_users }}</p>
+      </div>
+
+      <div class="card">
+        <h3>Trending Movies</h3>
+        <p>{{ trending_movies }}</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

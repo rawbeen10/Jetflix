@@ -1,0 +1,20 @@
+{% extends 'home/base.html' %}
+{% load static %}
+
+{% block title %}Login - JetFlix{% endblock %}
+
+{% block main_class %}login-page-content{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+  <div class="login-container">
+    <h1>Log in</h1>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Login</button>
+    </form>
+    <p class="register-link">Don't have an account? <a href="{% url 'home' %}">Register here</a></p>
+  </div>
+</div>
+{% endblock %}

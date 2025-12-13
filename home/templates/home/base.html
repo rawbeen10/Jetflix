@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}JetFlix{% endblock %}</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'home/style.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <!-- Logo -->
+      <div class="navbar-left">
+        <a href="{% url 'home' %}" class="logo">JETFLIX</a>
+        
+        {% if user.is_authenticated %}
+        <!-- Navigation Links for logged in users -->
+        <div class="nav-links">
+          <a href="{% url 'home' %}" class="nav-link">Home</a>
+          {% comment %} <a href="{% url 'movies' %}" class="nav-link">Movies</a> {% endcomment %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Right Side Navigation -->
+      <div class="navbar-right">
+        {% if user.is_authenticated %}
+          <!-- Search Icon -->
+          <a href="{% url 'search' %}" class="nav-icon" title="Search">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </a>
+          
+          <!-- Watchlist -->
+          <a href="{% url 'watchlist' %}" class="nav-icon" title="Watchlist">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </a>
+
+          <!-- Profile Dropdown -->
+          <div class="profile-dropdown">
+            <button class="profile-btn">
+              <img src="{% static 'images/default-avatar.png' %}" alt="Profile" class="profile-img">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div class="dropdown-menu">
+              <a href="{% url 'watch_history' %}" class="dropdown-item">Watch History</a>
+              <a href="{% url 'edit_profile' %}" class="dropdown-item">Edit Profile</a>
+              <div class="dropdown-divider"></div>
+              <a href="{% url 'logout' %}" class="dropdown-item">Logout</a>
+            </div>
+          </div>
+        {% else %}
+          <!-- Links for logged out users -->
+          <div class="nav-links">
+            <a href="{% url 'home' %}" class="nav-link">Home</a>
+            <a href="{% url 'movies' %}" class="nav-link">Movies</a>
+            <a href="{% url 'login' %}" class="nav-link-btn">Login</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-links">
+        <div class="footer-column">
+          <a href="#">FAQ</a>
+          <a href="#">Investor Relations</a>
+          <a href="#">Privacy</a>
+          <a href="#">Speed Test</a>
+        </div>
+        <div class="footer-column">
+          <a href="#">Help Center</a>
+          <a href="#">Jobs</a>
+          <a href="#">Cookie Preferences</a>
+          <a href="#">Legal Notices</a>
+        </div>
+        <div class="footer-column">
+          <a href="#">Account</a>
+          <a href="#">Ways to Watch</a>
+          <a href="#">Corporate Information</a>
+          <a href="#">Only on JetFlix</a>
+        </div>
+        <div class="footer-column">
+          <a href="#">Media Center</a>
+          <a href="#">Terms of Use</a>
+          <a href="#">Contact Us</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 JetFlix, Inc.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Profile dropdown toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const profileBtn = document.querySelector('.profile-btn');
+      const dropdownMenu = document.querySelector('.dropdown-menu');
+      
+      if (profileBtn && dropdownMenu) {
+        profileBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          dropdownMenu.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function() {
+          dropdownMenu.classList.remove('show');
+        });
+      }
+
+      // Navbar scroll effect
+      const navbar = document.querySelector('.navbar');
+      let lastScroll = 0;
+
+      window.addEventListener('scroll', function() {
+        const currentScroll = window.pageYOffset;
+        
+        if (currentScroll > 50) {
+          navbar.classList.add('navbar-scrolled');
+        } else {
+          navbar.classList.remove('navbar-scrolled');
+        }
+        
+        lastScroll = currentScroll;
+      });
+    });
+  </script>
+  
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
