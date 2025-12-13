@@ -112,13 +112,17 @@ def home_page(request):
         # Get the 8 most recently added movies
         recent_movies = Movie.objects.filter(is_published=True).order_by('-id')[:8]
         
+        # Get trending movies (top 8 by views)
+        trending_movies = Movie.objects.filter(is_published=True).order_by('-views')[:8]
+        
         return render(request, 'home/homepage.html', {
-            'movies': recent_movies
+            'movies': recent_movies,
+            'trending_movies': trending_movies
         })
     except Exception as e:
         logger.error(f"Error loading home page: {str(e)}")
         messages.error(request, "Unable to load movies. Please refresh the page.")
-        return render(request, 'home/homepage.html', {'movies': []})
+        return render(request, 'home/homepage.html', {'movies': [], 'trending_movies': []})
 
 
 def homepage_view(request):

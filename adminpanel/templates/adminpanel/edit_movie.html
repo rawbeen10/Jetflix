@@ -1,0 +1,347 @@
+{% extends 'adminpanel/base.html' %}
+{% block content %}
+<style>
+  .form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #2a2a2a;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .form-header {
+    margin-bottom: 30px;
+  }
+
+  .form-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 8px 0;
+  }
+
+  .form-subtitle {
+    color: #999;
+    font-size: 14px;
+  }
+
+  .form-group {
+    margin-bottom: 24px;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #fff;
+    font-size: 14px;
+  }
+
+  .form-label-required::after {
+    content: '*';
+    color: #e50914;
+    margin-left: 4px;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background-color: #1a1a1a;
+    color: #fff;
+    transition: all 0.2s;
+  }
+
+  .form-input:focus,
+  .form-select:focus,
+  .form-textarea:focus {
+    outline: none;
+    border-color: #e50914;
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.2);
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .form-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .file-input-wrapper {
+    position: relative;
+  }
+
+  .file-input-label {
+    display: block;
+    padding: 12px 16px;
+    background-color: #1a1a1a;
+    border: 2px dashed #444;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #999;
+  }
+
+  .file-input-label:hover {
+    border-color: #e50914;
+    background-color: #222;
+    color: #fff;
+  }
+
+  .form-input[type="file"] {
+    display: none;
+  }
+
+  .current-file {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: #1a1a1a;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #999;
+  }
+
+  .current-thumbnail {
+    margin-top: 12px;
+    max-width: 200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #333;
+  }
+
+  .btn {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary {
+    background-color: #e50914;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: #c4070f;
+  }
+
+  .btn-secondary {
+    background-color: #444;
+    color: #fff;
+  }
+
+  .btn-secondary:hover {
+    background-color: #555;
+  }
+
+  .form-helper {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+  }
+
+  .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 0;
+  }
+
+  .errorlist li {
+    color: #ff6b6b;
+    font-size: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .form-container {
+      padding: 24px;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<div class="form-container">
+  <div class="form-header">
+    <h2 class="form-title">Edit Movie</h2>
+    <p class="form-subtitle">Update movie information - ID: #{{ movie.id }}</p>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    {% for field in form %}
+      {% if field.name == 'title' or field.name == 'description' %}
+        <div class="form-group">
+          <label class="form-label form-label-required" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {{ field.errors }}
+        </div>
+      {% elif field.name == 'year' or field.name == 'genre' %}
+        {% if field.name == 'year' %}
+          <div class="form-row">
+        {% endif %}
+        <div class="form-group">
+          <label class="form-label form-label-required" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {{ field.errors }}
+        </div>
+        {% if field.name == 'genre' %}
+          </div>
+        {% endif %}
+      {% elif field.name == 'cast' or field.name == 'movie_length' %}
+        {% if field.name == 'cast' %}
+          <div class="form-row">
+        {% endif %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.name == 'cast' %}
+            <p class="form-helper">Comma-separated list of main actors</p>
+          {% endif %}
+          {{ field.errors }}
+        </div>
+        {% if field.name == 'movie_length' %}
+          </div>
+        {% endif %}
+      {% elif field.name == 'review_stars' or field.name == 'is_published' %}
+        {% if field.name == 'review_stars' %}
+          <div class="form-row">
+        {% endif %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {% if field.name == 'is_published' %}
+            <div class="checkbox-group">
+              {{ field }}
+              <label for="{{ field.id_for_label }}" style="margin: 0; font-weight: normal; color: #fff;">Published (visible to users)</label>
+            </div>
+          {% else %}
+            {{ field }}
+            <p class="form-helper">Rating out of 5 stars</p>
+          {% endif %}
+          {{ field.errors }}
+        </div>
+        {% if field.name == 'is_published' %}
+          </div>
+        {% endif %}
+      {% elif field.name == 'thumbnail' %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          <div class="file-input-wrapper">
+            <label for="{{ field.id_for_label }}" class="file-input-label">
+              📁 Choose new thumbnail (optional)
+            </label>
+            {{ field }}
+          </div>
+          {% if movie.thumbnail %}
+            <div class="current-file">Current: {{ movie.thumbnail.name }}</div>
+            <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}" class="current-thumbnail">
+          {% endif %}
+          {{ field.errors }}
+        </div>
+      {% elif field.name == 'video' %}
+        <div class="form-group">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          <div class="file-input-wrapper">
+            <label for="{{ field.id_for_label }}" class="file-input-label">
+              🎬 Choose new video (optional)
+            </label>
+            {{ field }}
+          </div>
+          {% if movie.video %}
+            <div class="current-file">Current: {{ movie.video.name }}</div>
+          {% endif %}
+          <p class="form-helper">⚠️ Video files can be large and may take time to upload</p>
+          {{ field.errors }}
+        </div>
+      {% endif %}
+    {% endfor %}
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+      <a href="/adminpanel/movies/" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Add form-input class to all form fields
+  document.querySelectorAll('input[type="text"], input[type="number"], select, textarea').forEach(el => {
+    el.classList.add('form-input');
+  });
+  
+  document.querySelectorAll('select').forEach(el => {
+    el.classList.add('form-select');
+  });
+  
+  document.querySelectorAll('textarea').forEach(el => {
+    el.classList.add('form-textarea');
+  });
+  
+  document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+    el.classList.add('form-checkbox');
+  });
+
+  // Update file input labels when files are selected
+  const thumbnailInput = document.querySelector('input[name="thumbnail"]');
+  if (thumbnailInput) {
+    thumbnailInput.addEventListener('change', function(e) {
+      const label = e.target.previousElementSibling;
+      if (e.target.files.length > 0) {
+        label.textContent = `📁 ${e.target.files[0].name}`;
+      }
+    });
+  }
+
+  const videoInput = document.querySelector('input[name="video"]');
+  if (videoInput) {
+    videoInput.addEventListener('change', function(e) {
+      const label = e.target.previousElementSibling;
+      if (e.target.files.length > 0) {
+        label.textContent = `🎬 ${e.target.files[0].name}`;
+      }
+    });
+  }
+</script>
+
+{% endblock %}

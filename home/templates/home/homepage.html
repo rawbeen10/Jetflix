@@ -418,7 +418,7 @@
     <div class="movies">
       {% if movies %}
         {% for movie in movies %}
-          <div class="movie-card" onclick="openModal({{ forloop.counter0 }})">
+          <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, false)">
             {% if movie.thumbnail %}
               <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
             {% else %}
@@ -437,34 +437,28 @@
     </div>
   </section>
 
-  <!-- Trending (Static placeholders) -->
+  <!-- Trending (Real data from views) -->
   <section class="section">
-    <h2>Trending Now</h2>
+    <h2>Trending Now 🔥</h2>
     <div class="movies">
-      <div class="movie-card" onclick="handleLoginRequired('browse')">
-        <img src="https://source.unsplash.com/300x450/?movie" />
-        <div class="movie-card-overlay">
-          <h3>Action Blockbuster</h3>
-          <p>2024</p>
-          <span class="movie-genre">Action</span>
-        </div>
-      </div>
-      <div class="movie-card" onclick="handleLoginRequired('browse')">
-        <img src="https://source.unsplash.com/301x450/?cinema" />
-        <div class="movie-card-overlay">
-          <h3>Drama Classic</h3>
-          <p>2024</p>
-          <span class="movie-genre">Drama</span>
-        </div>
-      </div>
-      <div class="movie-card" onclick="handleLoginRequired('browse')">
-        <img src="https://source.unsplash.com/302x450/?film" />
-        <div class="movie-card-overlay">
-          <h3>Thriller Night</h3>
-          <p>2024</p>
-          <span class="movie-genre">Thriller</span>
-        </div>
-      </div>
+      {% if trending_movies %}
+        {% for movie in trending_movies %}
+          <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, true)">
+            {% if movie.thumbnail %}
+              <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
+            {% else %}
+              <img src="https://via.placeholder.com/200x300?text=No+Image" alt="{{ movie.title }}">
+            {% endif %}
+            <div class="movie-card-overlay">
+              <h3>{{ movie.title }}</h3>
+              <p>{{ movie.year }} • {{ movie.views|default:"0" }} views</p>
+              <span class="movie-genre">{{ movie.genre }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:#ccc;">No trending movies yet.</p>
+      {% endif %}
     </div>
   </section>
 
@@ -556,6 +550,7 @@
   <script>
     const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
     
+    // Recently added movies
     const movies = [
       {% for movie in movies %}
       {
@@ -574,15 +569,36 @@
       {% endfor %}
     ];
 
+    // Trending movies
+    const trendingMovies = [
+      {% for movie in trending_movies %}
+      {
+        id: {{ movie.id }},
+        title: "{{ movie.title|escapejs }}",
+        year: {{ movie.year }},
+        description: "{{ movie.description|escapejs }}",
+        thumbnail: "{% if movie.thumbnail %}{{ movie.thumbnail.url }}{% else %}https://via.placeholder.com/200x300?text=No+Image{% endif %}",
+        video: "{% if movie.video %}{{ movie.video.url }}{% endif %}",
+        genre: "{{ movie.genre }}",
+        cast: "{{ movie.cast|escapejs }}",
+        length: "{{ movie.movie_length }}",
+        rating: {{ movie.review_stars }},
+        views: {{ movie.views }}
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+
     let currentMovieId = null;
 
-    function openModal(index) {
+    // Open modal with support for both recently added and trending movies
+    function openModal(index, isTrending = false) {
       if (!isAuthenticated) {
-        handleLoginRequired('movie', movies[index].id);
+        const movieArray = isTrending ? trendingMovies : movies;
+        handleLoginRequired('movie', movieArray[index].id);
         return;
       }
 
-      const movie = movies[index];
+      const movie = isTrending ? trendingMovies[index] : movies[index];
       currentMovieId = movie.id;
       const modal = document.getElementById('movieModal');
       
@@ -614,12 +630,43 @@
         return;
       }
 
-      const movie = movies.find(m => m.id === currentMovieId);
+      // Find movie in either array
+      let movie = movies.find(m => m.id === currentMovieId);
+      if (!movie) {
+        movie = trendingMovies.find(m => m.id === currentMovieId);
+      }
+
       if (movie && movie.video) {
+        // Increment view count before playing
+        incrementViewCount(currentMovieId);
         openVideoPlayer(movie);
       } else {
         showNotification('Video not available', 'error');
       }
+    }
+
+    function incrementViewCount(movieId) {
+      fetch("{% url 'movies:increment_view' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ movie_id: movieId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          console.log('View count updated:', data.views);
+          // Update the view count in both arrays if the movie exists there
+          const movieInRecent = movies.find(m => m.id === movieId);
+          if (movieInRecent) movieInRecent.views = data.views;
+          
+          const movieInTrending = trendingMovies.find(m => m.id === movieId);
+          if (movieInTrending) movieInTrending.views = data.views;
+        }
+      })
+      .catch(error => console.error('Error incrementing view:', error));
     }
 
     function openVideoPlayer(movie) {
@@ -651,7 +698,33 @@
         handleLoginRequired('watchlist');
         return;
       }
-      showNotification('Added to your watchlist!', 'success');
+      
+      if (!currentMovieId) return;
+      
+      fetch("{% url 'movies:add_to_watchlist' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ movie_id: currentMovieId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          if (data.action === 'added') {
+            showNotification('Added to your watchlist!', 'success');
+          } else {
+            showNotification('Already in your watchlist!', 'info');
+          }
+        } else {
+          showNotification('Error: ' + data.message, 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+      });
     }
 
     function handleLoginRequired(action, movieId = null) {
@@ -701,6 +774,22 @@
       return views + ' views';
     }
 
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // Event listeners
     document.getElementById('movieModal').addEventListener('click', function(e) {
       if (e.target === this) {
         closeModal();
@@ -719,9 +808,17 @@
         const movieToWatch = sessionStorage.getItem('movieToWatch');
         if (movieToWatch) {
           sessionStorage.removeItem('movieToWatch');
-          const index = movies.findIndex(m => m.id == movieToWatch);
+          
+          // Try to find in recently added movies first
+          let index = movies.findIndex(m => m.id == movieToWatch);
           if (index !== -1) {
-            openModal(index);
+            openModal(index, false);
+          } else {
+            // Try trending movies
+            index = trendingMovies.findIndex(m => m.id == movieToWatch);
+            if (index !== -1) {
+              openModal(index, true);
+            }
           }
         }
       }
