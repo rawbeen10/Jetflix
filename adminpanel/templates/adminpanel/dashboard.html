@@ -1,82 +1,85 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>JetFlix Admin Dashboard</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f0f0f;
-      color: white;
-    }
+{% extends 'adminpanel/base.html' %}
+{% block content %}
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
 
-    .sidebar {
-      width: 220px;
-      height: 100vh;
-      background: #111;
-      position: fixed;
-      padding: 20px;
-    }
+/* Body styling */
+body {
+    background-color: #141414;
+    color: #fff;
+    min-height: 100vh;
+}
 
-    .sidebar h2 {
-      color: #e50914;
-      text-align: center;
-    }
+/* Main container */
+.main {
+    width: 90%;
+    max-width: 1200px;
+}
 
-    .sidebar a {
-      display: block;
-      color: #ccc;
-      text-decoration: none;
-      margin: 15px 0;
-    }
+/* Dashboard title */
+.main h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 40px;
+    color: #ffffffff; /* Netflix red */
+}
 
-    .sidebar a:hover {
-      color: white;
-    }
+/* Cards container */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
 
-    .main {
-      margin-left: 240px;
-      padding: 30px;
-    }
+/* Individual card */
+.card {
+  border: 1px solid #ffffffff;
+    background-color: #1f1f1f;
+    border-radius: 10px;
+    padding: 30px 20px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-    }
+/* Card hover effect */
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
 
-    .card {
-      background: #1a1a1a;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-    }
+/* Card headings */
+.card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #e5e5e5;
+}
 
-    .card h3 {
-      margin-bottom: 10px;
-      font-size: 18px;
+/* Card values */
+.card p {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main h1 {
+        font-size: 2rem;
     }
 
     .card p {
-      font-size: 28px;
-      color: #e50914;
+        font-size: 1.5rem;
     }
-  </style>
-</head>
-<body>
+}
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h2>JetFlix</h2>
-    <a href="#">Dashboard</a>
-      <li><a href="{% url 'admin-all-movies' %}">Movies</a></li>
-    <a href="{% url 'add_movie' %}">Add Movie</a>
+</style>
 
-    <a href="#">Users</a>
-    <a href="#">Logout</a>
-  </div>
-
-  <!-- Main Content -->
   <div class="main">
     <h1>Admin Dashboard</h1>
 
@@ -100,3 +103,4 @@
 
 </body>
 </html>
+{% endblock %}
