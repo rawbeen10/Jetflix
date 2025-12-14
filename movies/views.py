@@ -7,7 +7,7 @@ from .models import Movie, Watchlist
 import json
 
 def landing_page(request):
-    movies = Movie.objects.filter(is_published=True)
+    movies = Movie.objects.filter(is_published=True).prefetch_related('genres', 'language')
     
     # Get user's watchlist IDs if logged in
     user_watchlist_ids = []
@@ -21,21 +21,14 @@ def landing_page(request):
         'user_watchlist_ids': user_watchlist_ids
     })
 
-def trending_movies(request):
-    """Display trending movies based on view count"""
-    # Get top 12 movies by views
-    trending = Movie.objects.filter(is_published=True).order_by('-views')[:12]
+@login_required
+def watchlist_page(request):
+    watchlist_items = Watchlist.objects.filter(user=request.user).select_related('movie').prefetch_related('movie__genres', 'movie__language')
+    movies = [item.movie for item in watchlist_items]
     
-    # Get user's watchlist IDs if logged in
-    user_watchlist_ids = []
-    if request.user.is_authenticated:
-        user_watchlist_ids = list(
-            Watchlist.objects.filter(user=request.user).values_list('movie_id', flat=True)
-        )
-    
-    return render(request, 'movies/trending.html', {
-        'movies': trending,
-        'user_watchlist_ids': user_watchlist_ids
+    return render(request, 'movies/watchlist.html', {
+        'movies': movies,
+        'watchlist_count': len(movies)
     })
 
 @login_required
@@ -131,3 +124,21 @@ def remove_from_watchlist(request):
             'status': 'error',
             'message': str(e)
         }, status=400)
+    
+from movies.models import WatchHistory
+
+@login_required
+def increment_view(request):
+    if request.method == 'POST':
+        movie_id = json.loads(request.body).get('movie_id')
+        movie = Movie.objects.get(id=movie_id)
+        movie.views += 1
+        movie.save()
+        
+        # Add to watch history
+        WatchHistory.objects.get_or_create(
+            user=request.user,
+            movie=movie
+        )
+        
+        return JsonResponse({'status': 'success', 'views': movie.views})
