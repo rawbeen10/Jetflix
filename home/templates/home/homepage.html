@@ -111,6 +111,45 @@
       margin-top: 5px;
     }
 
+    /* Empty State Styles */
+    .empty-state {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-state svg {
+      margin: 0 auto 20px;
+    }
+
+    .empty-state h3 {
+      font-size: 24px;
+      color: #e5e5e5;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      font-size: 16px;
+      color: #888;
+      margin-bottom: 24px;
+    }
+
+    .empty-state button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      background-color: #e50914;
+      border: none;
+      border-radius: 6px;
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .empty-state button:hover {
+      background-color: #f6121d;
+    }
+
     /* Notification styles */
     .notification {
       position: fixed;
@@ -418,7 +457,7 @@
     <div class="movies">
       {% if movies %}
         {% for movie in movies %}
-          <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, false)">
+          <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, false, false)">
             {% if movie.thumbnail %}
               <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
             {% else %}
@@ -426,8 +465,8 @@
             {% endif %}
             <div class="movie-card-overlay">
               <h3>{{ movie.title }}</h3>
-              <p>{{ movie.year }}</p>
-              <span class="movie-genre">{{ movie.genre }}</span>
+              <p>{{ movie.year }}{% if movie.language %} • {{ movie.language.name }}{% endif %}</p>
+              <span class="movie-genre">{{ movie.get_genres_display }}</span>
             </div>
           </div>
         {% endfor %}
@@ -443,7 +482,7 @@
     <div class="movies">
       {% if trending_movies %}
         {% for movie in trending_movies %}
-          <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, true)">
+          <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, true, false)">
             {% if movie.thumbnail %}
               <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
             {% else %}
@@ -451,8 +490,8 @@
             {% endif %}
             <div class="movie-card-overlay">
               <h3>{{ movie.title }}</h3>
-              <p>{{ movie.year }} • {{ movie.views|default:"0" }} views</p>
-              <span class="movie-genre">{{ movie.genre }}</span>
+              <p>{{ movie.year }}{% if movie.language %} • {{ movie.language.name }}{% endif %} • {{ movie.views|default:"0" }} views</p>
+              <span class="movie-genre">{{ movie.get_genres_display }}</span>
             </div>
           </div>
         {% endfor %}
@@ -462,26 +501,54 @@
     </div>
   </section>
 
-  <!-- Recommended -->
+  <!-- Recommended For You -->
   <section class="section">
     <h2>Recommended For You</h2>
     <div class="movies">
-      <div class="movie-card" onclick="handleLoginRequired('browse')">
-        <img src="https://source.unsplash.com/305x450/?drama-movie" />
-        <div class="movie-card-overlay">
-          <h3>Romantic Story</h3>
-          <p>2024</p>
-          <span class="movie-genre">Romance</span>
+      {% if user.is_authenticated %}
+        {% if is_new_user %}
+          <!-- New user with no watch history -->
+          <div class="empty-state">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <h3>Start Your Journey</h3>
+            <p>Watch some movies to get personalized recommendations</p>
+            <button onclick="window.location.href='{% url 'movies:landing' %}'">
+              Browse Movies
+            </button>
+          </div>
+        {% elif recommended_movies %}
+          {% for movie in recommended_movies %}
+            <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, false, true)">
+              {% if movie.thumbnail %}
+                <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
+              {% else %}
+                <img src="https://via.placeholder.com/200x300?text=No+Image" alt="{{ movie.title }}">
+              {% endif %}
+              <div class="movie-card-overlay">
+                <h3>{{ movie.title }}</h3>
+                <p>{{ movie.year }}{% if movie.language %} • {{ movie.language.name }}{% endif %}</p>
+                <span class="movie-genre">{{ movie.get_genres_display }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p style="color:#ccc; grid-column: 1/-1;">No recommendations available yet. Watch more movies!</p>
+        {% endif %}
+      {% else %}
+        <!-- Not logged in -->
+        <div class="movie-card" onclick="handleLoginRequired('browse')">
+          <img src="https://source.unsplash.com/305x450/?drama-movie" />
+          <div class="movie-card-overlay">
+            <h3>Login to see recommendations</h3>
+            <p>2024</p>
+            <span class="movie-genre">Drama</span>
+          </div>
         </div>
-      </div>
-      <div class="movie-card" onclick="handleLoginRequired('browse')">
-        <img src="https://source.unsplash.com/306x450/?romance-movie" />
-        <div class="movie-card-overlay">
-          <h3>Comedy Hit</h3>
-          <p>2024</p>
-          <span class="movie-genre">Comedy</span>
-        </div>
-      </div>
+      {% endif %}
     </div>
   </section>
 
@@ -521,8 +588,12 @@
             <span class="modal-info-value" id="modalCast">Unknown</span>
           </div>
           <div class="modal-info-row">
-            <span class="modal-info-label">Genre:</span>
+            <span class="modal-info-label">Genres:</span>
             <span class="modal-info-value" id="modalGenre">Action</span>
+          </div>
+          <div class="modal-info-row">
+            <span class="modal-info-label">Language:</span>
+            <span class="modal-info-value" id="modalLanguage">Unknown</span>
           </div>
           <div class="modal-info-row">
             <span class="modal-info-label">Views:</span>
@@ -560,7 +631,8 @@
         description: "{{ movie.description|escapejs }}",
         thumbnail: "{% if movie.thumbnail %}{{ movie.thumbnail.url }}{% else %}https://via.placeholder.com/200x300?text=No+Image{% endif %}",
         video: "{% if movie.video %}{{ movie.video.url }}{% endif %}",
-        genre: "{{ movie.genre }}",
+        genres: "{{ movie.get_genres_display }}",
+        language: "{% if movie.language %}{{ movie.language.name }}{% else %}Unknown{% endif %}",
         cast: "{{ movie.cast|escapejs }}",
         length: "{{ movie.movie_length }}",
         rating: {{ movie.review_stars }},
@@ -579,7 +651,28 @@
         description: "{{ movie.description|escapejs }}",
         thumbnail: "{% if movie.thumbnail %}{{ movie.thumbnail.url }}{% else %}https://via.placeholder.com/200x300?text=No+Image{% endif %}",
         video: "{% if movie.video %}{{ movie.video.url }}{% endif %}",
-        genre: "{{ movie.genre }}",
+        genres: "{{ movie.get_genres_display }}",
+        language: "{% if movie.language %}{{ movie.language.name }}{% else %}Unknown{% endif %}",
+        cast: "{{ movie.cast|escapejs }}",
+        length: "{{ movie.movie_length }}",
+        rating: {{ movie.review_stars }},
+        views: {{ movie.views }}
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    // Recommended movies
+    const recommendedMovies = [
+      {% for movie in recommended_movies %}
+      {
+        id: {{ movie.id }},
+        title: "{{ movie.title|escapejs }}",
+        year: {{ movie.year }},
+        description: "{{ movie.description|escapejs }}",
+        thumbnail: "{% if movie.thumbnail %}{{ movie.thumbnail.url }}{% else %}https://via.placeholder.com/200x300?text=No+Image{% endif %}",
+        video: "{% if movie.video %}{{ movie.video.url }}{% endif %}",
+        genres: "{{ movie.get_genres_display }}",
+        language: "{% if movie.language %}{{ movie.language.name }}{% else %}Unknown{% endif %}",
         cast: "{{ movie.cast|escapejs }}",
         length: "{{ movie.movie_length }}",
         rating: {{ movie.review_stars }},
@@ -590,15 +683,15 @@
 
     let currentMovieId = null;
 
-    // Open modal with support for both recently added and trending movies
-    function openModal(index, isTrending = false) {
+    // Open modal with support for recently added, trending, and recommended movies
+    function openModal(index, isTrending = false, isRecommended = false) {
       if (!isAuthenticated) {
-        const movieArray = isTrending ? trendingMovies : movies;
+        const movieArray = isRecommended ? recommendedMovies : (isTrending ? trendingMovies : movies);
         handleLoginRequired('movie', movieArray[index].id);
         return;
       }
 
-      const movie = isTrending ? trendingMovies[index] : movies[index];
+      const movie = isRecommended ? recommendedMovies[index] : (isTrending ? trendingMovies[index] : movies[index]);
       currentMovieId = movie.id;
       const modal = document.getElementById('movieModal');
       
@@ -609,7 +702,8 @@
       document.getElementById('modalLength').textContent = movie.length;
       document.getElementById('modalDescription').textContent = movie.description;
       document.getElementById('modalCast').textContent = movie.cast;
-      document.getElementById('modalGenre').textContent = movie.genre;
+      document.getElementById('modalGenre').textContent = movie.genres;
+      document.getElementById('modalLanguage').textContent = movie.language;
       document.getElementById('modalViews').textContent = formatViews(movie.views);
       
       modal.classList.add('active');
@@ -630,10 +724,13 @@
         return;
       }
 
-      // Find movie in either array
+      // Find movie in any of the three arrays
       let movie = movies.find(m => m.id === currentMovieId);
       if (!movie) {
         movie = trendingMovies.find(m => m.id === currentMovieId);
+      }
+      if (!movie) {
+        movie = recommendedMovies.find(m => m.id === currentMovieId);
       }
 
       if (movie && movie.video) {
@@ -658,12 +755,16 @@
       .then(data => {
         if (data.status === 'success') {
           console.log('View count updated:', data.views);
-          // Update the view count in both arrays if the movie exists there
+          
+          // Update the view count in all three arrays if the movie exists there
           const movieInRecent = movies.find(m => m.id === movieId);
           if (movieInRecent) movieInRecent.views = data.views;
           
           const movieInTrending = trendingMovies.find(m => m.id === movieId);
           if (movieInTrending) movieInTrending.views = data.views;
+          
+          const movieInRecommended = recommendedMovies.find(m => m.id === movieId);
+          if (movieInRecommended) movieInRecommended.views = data.views;
         }
       })
       .catch(error => console.error('Error incrementing view:', error));
@@ -812,12 +913,18 @@
           // Try to find in recently added movies first
           let index = movies.findIndex(m => m.id == movieToWatch);
           if (index !== -1) {
-            openModal(index, false);
+            openModal(index, false, false);
           } else {
             // Try trending movies
             index = trendingMovies.findIndex(m => m.id == movieToWatch);
             if (index !== -1) {
-              openModal(index, true);
+              openModal(index, true, false);
+            } else {
+              // Try recommended movies
+              index = recommendedMovies.findIndex(m => m.id == movieToWatch);
+              if (index !== -1) {
+                openModal(index, false, true);
+              }
             }
           }
         }

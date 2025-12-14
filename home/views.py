@@ -3,6 +3,8 @@ from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db.models import Q
 from .forms import CustomUserCreationForm
 from movies.models import Movie
 import logging
@@ -109,26 +111,108 @@ def edit_profile_view(request):
 
 def home_page(request):
     try:
-        # Get the 8 most recently added movies
-        recent_movies = Movie.objects.filter(is_published=True).order_by('-id')[:8]
+        # Get the 8 most recently added movies with prefetch
+        recent_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').order_by('-id')[:8]
         
         # Get trending movies (top 8 by views)
-        trending_movies = Movie.objects.filter(is_published=True).order_by('-views')[:8]
+        trending_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').order_by('-views')[:8]
+        
+        # Get ALL movies for search sidebar (only if user is authenticated)
+        all_movies = []
+        if request.user.is_authenticated:
+            all_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').all()
         
         return render(request, 'home/homepage.html', {
             'movies': recent_movies,
-            'trending_movies': trending_movies
+            'trending_movies': trending_movies,
+            'all_movies': all_movies,  # For search sidebar
         })
     except Exception as e:
         logger.error(f"Error loading home page: {str(e)}")
         messages.error(request, "Unable to load movies. Please refresh the page.")
-        return render(request, 'home/homepage.html', {'movies': [], 'trending_movies': []})
+        return render(request, 'home/homepage.html', {
+            'movies': [], 
+            'trending_movies': [],
+            'all_movies': []
+        })
 
 
 def homepage_view(request):
     try:
-        return render(request, 'home/homepage.html')
+        # Get ALL movies for search sidebar (only if user is authenticated)
+        all_movies = []
+        if request.user.is_authenticated:
+            all_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').all()
+        
+        return render(request, 'home/homepage.html', {
+            'all_movies': all_movies
+        })
     except Exception as e:
         logger.error(f"Error in homepage_view: {str(e)}")
         messages.error(request, "Unable to load homepage.")
-        return render(request, 'home/homepage.html')
+        return render(request, 'home/homepage.html', {'all_movies': []})
+
+
+# OPTIONAL: API endpoint for AJAX search (if you want real-time backend search)
+@login_required(login_url='login')
+def search_movies_api(request):
+    """
+    Optional API endpoint for searching movies via AJAX.
+    This allows backend filtering instead of client-side only.
+    """
+    try:
+        query = request.GET.get('q', '').strip()
+        language = request.GET.get('language', '')
+        genres = request.GET.getlist('genres[]')
+        
+        # Start with all published movies
+        movies = Movie.objects.filter(is_published=True)
+        
+        # Apply search query
+        if query:
+            movies = movies.filter(
+                Q(title__icontains=query) |
+                Q(description__icontains=query) |
+                Q(cast__icontains=query)
+            )
+        
+        # Apply language filter
+        if language:
+            movies = movies.filter(language__name=language)
+        
+        # Apply genre filter
+        if genres:
+            for genre in genres:
+                movies = movies.filter(genres__name__icontains=genre)
+        
+        # Get results with related data
+        movies = movies.select_related('language').prefetch_related('genres').distinct()[:50]
+        
+        # Format response
+        data = [{
+            'id': movie.id,
+            'title': movie.title,
+            'year': movie.year,
+            'description': movie.description or '',
+            'thumbnail': movie.thumbnail.url if movie.thumbnail else '',
+            'video': movie.video.url if movie.video else '',
+            'genres': movie.get_genres_display(),
+            'language': movie.language.name if movie.language else 'Unknown',
+            'cast': movie.cast or '',
+            'rating': float(movie.review_stars) if hasattr(movie, 'review_stars') else 0.0,
+            'views': movie.views if hasattr(movie, 'views') else 0,
+            'length': movie.movie_length if hasattr(movie, 'movie_length') else 'Unknown',
+        } for movie in movies]
+        
+        return JsonResponse({
+            'status': 'success',
+            'count': len(data),
+            'movies': data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in search_movies_api: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': 'An error occurred while searching movies.'
+        }, status=500)

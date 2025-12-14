@@ -10,5 +10,7 @@ urlpatterns = [
     path('watch_history/', views.watch_history_view, name='watch_history'),
     path('edit_profile/', views.edit_profile_view, name='edit_profile'),
     path('', views.home_page, name='home'),
+    path('api/search/', views.search_movies_api, name='search_movies_api'),
+
     
 ]

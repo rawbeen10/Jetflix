@@ -1,41 +1,53 @@
 {% extends 'adminpanel/base.html' %}
 {% block content %}
 <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+  }
+
   .form-container {
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
-    background: #2a2a2a;
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
+    padding: 50px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   }
 
   .form-header {
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    text-align: center;
+    padding-bottom: 30px;
+    border-bottom: 2px solid #e50914;
   }
 
   .form-title {
-    font-size: 28px;
+    font-size: 36px;
     font-weight: 700;
     color: #fff;
-    margin: 0 0 8px 0;
+    margin: 0 0 12px 0;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   }
 
   .form-subtitle {
     color: #999;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 500;
   }
 
   .form-group {
-    margin-bottom: 24px;
+    margin-bottom: 28px;
   }
 
   .form-label {
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     font-weight: 600;
     color: #fff;
-    font-size: 14px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
   }
 
   .form-label-required::after {
@@ -48,14 +60,14 @@
   .form-select,
   .form-textarea {
     width: 100%;
-    padding: 12px 16px;
-    border: 1px solid #444;
-    border-radius: 6px;
-    font-size: 14px;
+    padding: 14px 18px;
+    border: 2px solid #444;
+    border-radius: 8px;
+    font-size: 15px;
     font-family: inherit;
     background-color: #1a1a1a;
     color: #fff;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
   }
 
   .form-input:focus,
@@ -63,30 +75,83 @@
   .form-textarea:focus {
     outline: none;
     border-color: #e50914;
-    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.2);
+    box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.15);
+    background-color: #222;
   }
 
   .form-textarea {
     resize: vertical;
-    min-height: 120px;
+    min-height: 140px;
+    line-height: 1.6;
   }
 
   .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 24px;
   }
 
   .checkbox-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    padding: 14px 18px;
+    background-color: #1a1a1a;
+    border: 2px solid #444;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .checkbox-group:hover {
+    border-color: #666;
   }
 
   .form-checkbox {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: #e50914;
+  }
+
+  /* Genre Checkboxes Styling */
+  .genre-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    padding: 20px;
+    background-color: #1a1a1a;
+    border: 2px solid #444;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .genre-checkboxes:hover {
+    border-color: #666;
+  }
+
+  .genre-checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .genre-checkboxes label:hover {
+    background-color: rgba(229, 9, 20, 0.1);
+    transform: translateX(4px);
+  }
+
+  .genre-checkboxes input[type="checkbox"] {
     width: 20px;
     height: 20px;
     cursor: pointer;
+    accent-color: #e50914;
   }
 
   .file-input-wrapper {
@@ -95,20 +160,24 @@
 
   .file-input-label {
     display: block;
-    padding: 12px 16px;
-    background-color: #1a1a1a;
-    border: 2px dashed #444;
-    border-radius: 6px;
+    padding: 20px;
+    background: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
+    border: 3px dashed #444;
+    border-radius: 10px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
     color: #999;
+    font-weight: 600;
+    font-size: 15px;
   }
 
   .file-input-label:hover {
     border-color: #e50914;
-    background-color: #222;
+    background: linear-gradient(145deg, #222 0%, #1a1a1a 100%);
     color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
   }
 
   .form-input[type="file"] {
@@ -117,73 +186,114 @@
 
   .form-actions {
     display: flex;
-    gap: 12px;
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid #333;
+    gap: 16px;
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid #333;
   }
 
   .btn {
-    padding: 12px 32px;
+    padding: 16px 40px;
     border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
     text-decoration: none;
     display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn:hover::before {
+    left: 100%;
   }
 
   .btn-primary {
-    background-color: #e50914;
+    background: linear-gradient(135deg, #e50914 0%, #c4070f 100%);
     color: white;
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
   }
 
   .btn-primary:hover {
-    background-color: #c4070f;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(229, 9, 20, 0.6);
   }
 
   .btn-secondary {
-    background-color: #444;
+    background: linear-gradient(135deg, #444 0%, #333 100%);
     color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   }
 
   .btn-secondary:hover {
-    background-color: #555;
+    background: linear-gradient(135deg, #555 0%, #444 100%);
+    transform: translateY(-2px);
   }
 
   .form-helper {
-    font-size: 12px;
+    font-size: 13px;
     color: #999;
-    margin-top: 4px;
+    margin-top: 6px;
+    font-style: italic;
   }
 
   .errorlist {
     list-style: none;
     padding: 0;
-    margin: 8px 0 0 0;
+    margin: 10px 0 0 0;
   }
 
   .errorlist li {
     color: #ff6b6b;
-    font-size: 12px;
+    font-size: 13px;
+    padding: 8px 12px;
+    background-color: rgba(255, 107, 107, 0.1);
+    border-left: 3px solid #ff6b6b;
+    border-radius: 4px;
+    margin-top: 4px;
   }
 
   .preview-container {
-    margin-top: 12px;
+    margin-top: 16px;
     display: none;
   }
 
   .preview-image {
-    max-width: 200px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    max-width: 250px;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    border: 3px solid #333;
+    transition: all 0.3s ease;
+  }
+
+  .preview-image:hover {
+    transform: scale(1.05);
+    border-color: #e50914;
+  }
+
+  .file-selected {
+    border-color: #46d369 !important;
+    color: #46d369 !important;
   }
 
   @media (max-width: 768px) {
     .form-container {
-      padding: 24px;
+      padding: 30px 20px;
     }
 
     .form-row {
@@ -193,123 +303,219 @@
     .form-actions {
       flex-direction: column;
     }
+
+    .genre-checkboxes {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .form-title {
+      font-size: 28px;
+    }
+  }
+
+  /* Animation for form load */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .form-container {
+    animation: fadeInUp 0.6s ease;
+  }
+
+  /* Success message styling */
+  .form-success {
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #46d369 0%, #2ecc71 100%);
+    color: #fff;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(70, 211, 105, 0.3);
   }
 </style>
 
 <div class="form-container">
   <div class="form-header">
-    <h2 class="form-title">Add New Movie</h2>
+    <h2 class="form-title">➕ Add New Movie</h2>
     <p class="form-subtitle">Fill in the details to add a new movie to your catalog</p>
   </div>
 
   <form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     
-    {% for field in form %}
-      {% if field.name == 'title' or field.name == 'description' %}
-        <div class="form-group">
-          <label class="form-label form-label-required" for="{{ field.id_for_label }}">{{ field.label }}</label>
-          {{ field }}
-          {{ field.errors }}
+    <!-- Title -->
+    <div class="form-group">
+      <label class="form-label form-label-required" for="{{ form.title.id_for_label }}">
+        🎬 {{ form.title.label }}
+      </label>
+      {{ form.title }}
+      {{ form.title.errors }}
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label class="form-label form-label-required" for="{{ form.description.id_for_label }}">
+        📝 {{ form.description.label }}
+      </label>
+      {{ form.description }}
+      {{ form.description.errors }}
+    </div>
+
+    <!-- Year and Language -->
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label form-label-required" for="{{ form.year.id_for_label }}">
+          📅 {{ form.year.label }}
+        </label>
+        {{ form.year }}
+        {{ form.year.errors }}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="{{ form.language.id_for_label }}">
+          🌍 {{ form.language.label }}
+        </label>
+        {{ form.language }}
+        <p class="form-helper">Select the movie's primary language</p>
+        {{ form.language.errors }}
+      </div>
+    </div>
+
+    <!-- Genres (Multiple Selection) -->
+    <div class="form-group">
+      <label class="form-label form-label-required">
+        🎭 {{ form.genres.label }}
+      </label>
+      {{ form.genres }}
+      <p class="form-helper">Select one or more genres that describe this movie</p>
+      {{ form.genres.errors }}
+    </div>
+
+    <!-- Cast and Movie Length -->
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="{{ form.cast.id_for_label }}">
+          👥 {{ form.cast.label }}
+        </label>
+        {{ form.cast }}
+        <p class="form-helper">Comma-separated list of main actors</p>
+        {{ form.cast.errors }}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="{{ form.movie_length.id_for_label }}">
+          ⏱️ {{ form.movie_length.label }}
+        </label>
+        {{ form.movie_length }}
+        <p class="form-helper">e.g. 2h 30m or 150 min</p>
+        {{ form.movie_length.errors }}
+      </div>
+    </div>
+
+    <!-- Review Stars and Views -->
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="{{ form.review_stars.id_for_label }}">
+          ⭐ {{ form.review_stars.label }}
+        </label>
+        {{ form.review_stars }}
+        <p class="form-helper">Rating out of 5 stars</p>
+        {{ form.review_stars.errors }}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="{{ form.is_published.id_for_label }}">
+          📢 {{ form.is_published.label }}
+        </label>
+        <div class="checkbox-group">
+          {{ form.is_published }}
+          <label for="{{ form.is_published.id_for_label }}" style="margin: 0; font-weight: normal; color: #fff;">Publish immediately (visible to users)</label>
         </div>
-      {% elif field.name == 'year' or field.name == 'genre' %}
-        {% if field.name == 'year' %}
-          <div class="form-row">
-        {% endif %}
-        <div class="form-group">
-          <label class="form-label form-label-required" for="{{ field.id_for_label }}">{{ field.label }}</label>
-          {{ field }}
-          {{ field.errors }}
-        </div>
-        {% if field.name == 'genre' %}
-          </div>
-        {% endif %}
-      {% elif field.name == 'cast' or field.name == 'movie_length' %}
-        {% if field.name == 'cast' %}
-          <div class="form-row">
-        {% endif %}
-        <div class="form-group">
-          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-          {{ field }}
-          {% if field.name == 'cast' %}
-            <p class="form-helper">Comma-separated list of main actors</p>
-          {% elif field.name == 'movie_length' %}
-            <p class="form-helper">e.g. 2h 30m or 150 min</p>
-          {% endif %}
-          {{ field.errors }}
-        </div>
-        {% if field.name == 'movie_length' %}
-          </div>
-        {% endif %}
-      {% elif field.name == 'review_stars' or field.name == 'is_published' %}
-        {% if field.name == 'review_stars' %}
-          <div class="form-row">
-        {% endif %}
-        <div class="form-group">
-          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-          {% if field.name == 'is_published' %}
-            <div class="checkbox-group">
-              {{ field }}
-              <label for="{{ field.id_for_label }}" style="margin: 0; font-weight: normal; color: #fff;">Publish immediately (visible to users)</label>
-            </div>
-          {% else %}
-            {{ field }}
-            <p class="form-helper">Rating out of 5 stars</p>
-          {% endif %}
-          {{ field.errors }}
-        </div>
-        {% if field.name == 'is_published' %}
-          </div>
-        {% endif %}
-      {% elif field.name == 'thumbnail' %}
-        <div class="form-group">
-          <label class="form-label form-label-required" for="{{ field.id_for_label }}">{{ field.label }}</label>
-          <div class="file-input-wrapper">
-            <label for="{{ field.id_for_label }}" class="file-input-label">
-              📁 Choose thumbnail image
-            </label>
-            {{ field }}
-          </div>
-          <div id="thumbnail-preview" class="preview-container">
-            <img id="thumbnail-img" class="preview-image" alt="Thumbnail preview">
-          </div>
-          <p class="form-helper">Recommended: 16:9 aspect ratio, JPG or PNG</p>
-          {{ field.errors }}
-        </div>
-      {% elif field.name == 'video' %}
-        <div class="form-group">
-          <label class="form-label form-label-required" for="{{ field.id_for_label }}">{{ field.label }}</label>
-          <div class="file-input-wrapper">
-            <label for="{{ field.id_for_label }}" class="file-input-label">
-              🎬 Choose video file
-            </label>
-            {{ field }}
-          </div>
-          <p class="form-helper">⚠️ Video files can be large and may take time to upload</p>
-          {{ field.errors }}
-        </div>
-      {% endif %}
-    {% endfor %}
+        {{ form.is_published.errors }}
+      </div>
+    </div>
+
+    <!-- Thumbnail -->
+    <div class="form-group">
+      <label class="form-label form-label-required" for="{{ form.thumbnail.id_for_label }}">
+        🖼️ {{ form.thumbnail.label }}
+      </label>
+      <div class="file-input-wrapper">
+        <label for="{{ form.thumbnail.id_for_label }}" class="file-input-label" id="thumbnail-label">
+          📁 Choose thumbnail image
+        </label>
+        {{ form.thumbnail }}
+      </div>
+      <div id="thumbnail-preview" class="preview-container">
+        <img id="thumbnail-img" class="preview-image" alt="Thumbnail preview">
+      </div>
+      <p class="form-helper">Recommended: 16:9 aspect ratio, JPG or PNG</p>
+      {{ form.thumbnail.errors }}
+    </div>
+
+    <!-- Video -->
+    <div class="form-group">
+      <label class="form-label form-label-required" for="{{ form.video.id_for_label }}">
+        🎥 {{ form.video.label }}
+      </label>
+      <div class="file-input-wrapper">
+        <label for="{{ form.video.id_for_label }}" class="file-input-label" id="video-label">
+          🎬 Choose video file
+        </label>
+        {{ form.video }}
+      </div>
+      <p class="form-helper">⚠️ Video files can be large and may take time to upload</p>
+      {{ form.video.errors }}
+    </div>
+
+    <!-- Views (hidden) -->
+    {% if form.views %}
+      <input type="hidden" name="views" value="0">
+    {% endif %}
 
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary">Publish Movie</button>
-      <a href="{% url 'admin-all-movies' %}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">🚀 Publish Movie</button>
+      <a href="{% url 'admin-all-movies' %}" class="btn btn-secondary">❌ Cancel</a>
     </div>
   </form>
 </div>
 
 <script>
+  // Add form classes to all form fields
+  document.querySelectorAll('input[type="text"], input[type="number"], select, textarea').forEach(el => {
+    if (!el.classList.contains('form-input')) {
+      el.classList.add('form-input');
+    }
+  });
+  
+  document.querySelectorAll('select').forEach(el => {
+    el.classList.add('form-select');
+  });
+  
+  document.querySelectorAll('textarea').forEach(el => {
+    el.classList.add('form-textarea');
+  });
+  
+  document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+    el.classList.add('form-checkbox');
+  });
+
   // Handle thumbnail preview
   const thumbnailInput = document.querySelector('input[name="thumbnail"]');
+  const thumbnailLabel = document.getElementById('thumbnail-label');
   if (thumbnailInput) {
     thumbnailInput.addEventListener('change', function(e) {
-      const label = e.target.previousElementSibling;
       const previewContainer = document.getElementById('thumbnail-preview');
       const previewImg = document.getElementById('thumbnail-img');
       
       if (e.target.files.length > 0) {
         const file = e.target.files[0];
-        label.textContent = `📁 ${file.name}`;
+        thumbnailLabel.textContent = `✓ ${file.name}`;
+        thumbnailLabel.classList.add('file-selected');
         
         // Show image preview
         const reader = new FileReader();
@@ -324,16 +530,39 @@
 
   // Handle video file name display
   const videoInput = document.querySelector('input[name="video"]');
+  const videoLabel = document.getElementById('video-label');
   if (videoInput) {
     videoInput.addEventListener('change', function(e) {
-      const label = e.target.previousElementSibling;
       if (e.target.files.length > 0) {
         const file = e.target.files[0];
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        label.textContent = `🎬 ${file.name} (${sizeMB} MB)`;
+        videoLabel.textContent = `✓ ${file.name} (${sizeMB} MB)`;
+        videoLabel.classList.add('file-selected');
       }
     });
   }
+
+  // Form validation highlight
+  document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(el => {
+    el.addEventListener('blur', function() {
+      if (this.value.trim() !== '') {
+        this.style.borderColor = '#46d369';
+      }
+    });
+  });
+
+  // Genre selection counter
+  const genreCheckboxes = document.querySelectorAll('.genre-checkboxes input[type="checkbox"]');
+  genreCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const checkedCount = document.querySelectorAll('.genre-checkboxes input[type="checkbox"]:checked').length;
+      if (checkedCount > 0) {
+        document.querySelector('.genre-checkboxes').style.borderColor = '#46d369';
+      } else {
+        document.querySelector('.genre-checkboxes').style.borderColor = '#444';
+      }
+    });
+  });
 </script>
 
 {% endblock %}
