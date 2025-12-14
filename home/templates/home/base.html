@@ -7,8 +7,410 @@
   {% load static %}
   <link rel="stylesheet" href="{% static 'home/style.css' %}">
   {% block extra_css %}{% endblock %}
+  <style>
+    /* Search Icon Enhancements */
+    .nav-icon {
+      position: relative;
+    }
+
+    /* Search Sidebar */
+    .search-sidebar {
+      position: fixed;
+      top: 0;
+      right: -450px;
+      width: 450px;
+      height: 100vh;
+      background-color: #141414;
+      z-index: 9999;
+      transition: right 0.3s ease;
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .search-sidebar.open {
+      right: 0;
+    }
+
+    .search-sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .search-sidebar-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .search-close-btn {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+    }
+
+    .search-close-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .search-sidebar-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Search Input */
+    .sidebar-search-input-wrapper {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .sidebar-search-input {
+      width: 100%;
+      padding: 14px 45px 14px 16px;
+      font-size: 15px;
+      background-color: #222;
+      border: 2px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      transition: all 0.3s;
+    }
+
+    .sidebar-search-input:focus {
+      outline: none;
+      border-color: #e50914;
+      background-color: #2a2a2a;
+    }
+
+    .sidebar-search-icon {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #888;
+      pointer-events: none;
+    }
+
+    /* Filter Button */
+    .sidebar-filter-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #2a2a2a;
+      border: 2px solid #3a3a3a;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .sidebar-filter-btn:hover {
+      background-color: #333;
+      border-color: #444;
+    }
+
+    .sidebar-filter-btn.active {
+      background-color: #e50914;
+      border-color: #e50914;
+    }
+
+    /* Filter Panel */
+    .sidebar-filter-panel {
+      background-color: #1a1a1a;
+      border: 2px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .sidebar-filter-panel.show {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .sidebar-filter-section {
+      margin-bottom: 16px;
+    }
+
+    .sidebar-filter-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .sidebar-filter-label {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+      color: #e5e5e5;
+    }
+
+    .sidebar-filter-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .sidebar-filter-option {
+      padding: 6px 12px;
+      background-color: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 16px;
+      color: #ccc;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sidebar-filter-option:hover {
+      background-color: #333;
+      color: #fff;
+    }
+
+    .sidebar-filter-option.selected {
+      background-color: #e50914;
+      border-color: #e50914;
+      color: #fff;
+    }
+
+    .sidebar-filter-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #2a2a2a;
+    }
+
+    .sidebar-filter-apply, .sidebar-filter-clear {
+      flex: 1;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sidebar-filter-apply {
+      background-color: #e50914;
+      border: none;
+      color: #fff;
+    }
+
+    .sidebar-filter-apply:hover {
+      background-color: #f6121d;
+    }
+
+    .sidebar-filter-clear {
+      background-color: transparent;
+      border: 1px solid #555;
+      color: #ccc;
+    }
+
+    .sidebar-filter-clear:hover {
+      border-color: #777;
+      color: #fff;
+    }
+
+    /* Results Count */
+    .sidebar-results-count {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    /* Search Results */
+    .sidebar-search-results {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sidebar-movie-item {
+      display: flex;
+      gap: 12px;
+      padding: 10px;
+      background-color: #1a1a1a;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .sidebar-movie-item:hover {
+      background-color: #222;
+      border-color: #e50914;
+      transform: translateX(4px);
+    }
+
+    .sidebar-movie-thumb {
+      width: 60px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-movie-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sidebar-movie-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sidebar-movie-meta {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-movie-rating {
+      color: #46d369;
+      font-weight: 600;
+    }
+
+    .sidebar-movie-genre {
+      display: inline-block;
+      background-color: rgba(229, 9, 20, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #e50914;
+      margin-top: 4px;
+    }
+
+    .sidebar-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    /* Overlay */
+    .search-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 9998;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .search-overlay.show {
+      display: block;
+      opacity: 1;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .search-sidebar {
+        width: 100%;
+        right: -100%;
+      }
+    }
+  </style>
 </head>
 <body>
+  <!-- Search Overlay -->
+  <div class="search-overlay" id="searchOverlay" onclick="closeSearchSidebar()"></div>
+
+  <!-- Search Sidebar -->
+  <div class="search-sidebar" id="searchSidebar">
+    <div class="search-sidebar-header">
+      <h2 class="search-sidebar-title">Search Movies</h2>
+      <button class="search-close-btn" onclick="closeSearchSidebar()">&times;</button>
+    </div>
+    
+    <div class="search-sidebar-body">
+      <!-- Search Input -->
+      <div class="sidebar-search-input-wrapper">
+        <input 
+          type="text" 
+          class="sidebar-search-input" 
+          id="sidebarSearchInput"
+          placeholder="Search movies..."
+          autocomplete="off"
+        >
+        <svg class="sidebar-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+      </div>
+
+      <!-- Filter Button -->
+      <button class="sidebar-filter-btn" id="sidebarFilterBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        Filters
+      </button>
+
+      <!-- Filter Panel -->
+      <div class="sidebar-filter-panel" id="sidebarFilterPanel">
+        <div class="sidebar-filter-section">
+          <label class="sidebar-filter-label">Language</label>
+          <div class="sidebar-filter-options" id="sidebarLanguageFilters"></div>
+        </div>
+        
+        <div class="sidebar-filter-section">
+          <label class="sidebar-filter-label">Genre</label>
+          <div class="sidebar-filter-options" id="sidebarGenreFilters"></div>
+        </div>
+        
+        <div class="sidebar-filter-actions">
+          <button class="sidebar-filter-apply" onclick="applySidebarFilters()">Apply</button>
+          <button class="sidebar-filter-clear" onclick="clearSidebarFilters()">Clear</button>
+        </div>
+      </div>
+
+      <!-- Results Count -->
+      <div class="sidebar-results-count" id="sidebarResultsCount">
+        Loading movies...
+      </div>
+
+      <!-- Search Results -->
+      <div class="sidebar-search-results" id="sidebarSearchResults">
+        <div class="sidebar-empty">Start searching or browse all movies</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-container">
@@ -29,7 +431,7 @@
       <div class="navbar-right">
         {% if user.is_authenticated %}
           <!-- Search Icon -->
-          <a href="{% url 'search' %}" class="nav-icon" title="Search">
+          <a href="javascript:void(0)" class="nav-icon" title="Search" onclick="openSearchSidebar()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.35-4.35"></path>
@@ -61,7 +463,6 @@
         {% else %}
           <!-- Links for logged out users -->
           <div class="nav-links">
-      
             <a href="{% url 'login' %}" class="nav-link-btn">Login</a>
           </div>
         {% endif %}
@@ -142,7 +543,265 @@
         
         lastScroll = currentScroll;
       });
+
+      // Initialize search sidebar
+      initSearchSidebar();
     });
+
+    // Search Sidebar Variables
+    let sidebarMovies = [];
+    let sidebarFilteredMovies = [];
+    let sidebarSelectedLanguages = [];
+    let sidebarSelectedGenres = [];
+    let searchTimeout;
+
+    function initSearchSidebar() {
+      // Fetch all movies data (you'll need to provide this from Django)
+      sidebarMovies = window.allMoviesData || [];
+      sidebarFilteredMovies = [...sidebarMovies];
+      
+      // Initialize filters
+      initializeSidebarFilters();
+      
+      // Display all movies initially
+      displaySidebarResults(sidebarFilteredMovies);
+      
+      // Setup search input listener
+      const searchInput = document.getElementById('sidebarSearchInput');
+      searchInput.addEventListener('input', handleSidebarSearch);
+      
+      // Setup filter button
+      const filterBtn = document.getElementById('sidebarFilterBtn');
+      filterBtn.addEventListener('click', toggleSidebarFilters);
+    }
+
+    function initializeSidebarFilters() {
+      if (sidebarMovies.length === 0) return;
+
+      // Extract unique languages
+      const languages = [...new Set(sidebarMovies.map(m => m.language))].filter(l => l && l !== 'Unknown');
+      const languageContainer = document.getElementById('sidebarLanguageFilters');
+      languageContainer.innerHTML = languages.map(lang => 
+        `<div class="sidebar-filter-option" onclick="toggleSidebarFilter('language', '${lang}', this)">${lang}</div>`
+      ).join('');
+
+      // Extract unique genres
+      const genresSet = new Set();
+      sidebarMovies.forEach(m => {
+        if (m.genres) {
+          m.genres.split(',').forEach(g => genresSet.add(g.trim()));
+        }
+      });
+      const genres = [...genresSet].filter(g => g);
+      const genreContainer = document.getElementById('sidebarGenreFilters');
+      genreContainer.innerHTML = genres.map(genre => 
+        `<div class="sidebar-filter-option" onclick="toggleSidebarFilter('genre', '${genre}', this)">${genre}</div>`
+      ).join('');
+    }
+
+    function toggleSidebarFilter(type, value, element) {
+      element.classList.toggle('selected');
+      
+      if (type === 'language') {
+        const index = sidebarSelectedLanguages.indexOf(value);
+        if (index > -1) {
+          sidebarSelectedLanguages.splice(index, 1);
+        } else {
+          sidebarSelectedLanguages.push(value);
+        }
+      } else if (type === 'genre') {
+        const index = sidebarSelectedGenres.indexOf(value);
+        if (index > -1) {
+          sidebarSelectedGenres.splice(index, 1);
+        } else {
+          sidebarSelectedGenres.push(value);
+        }
+      }
+    }
+
+    function applySidebarFilters() {
+      let filtered = [...sidebarMovies];
+
+      // Apply search query if exists
+      const searchQuery = document.getElementById('sidebarSearchInput').value.trim().toLowerCase();
+      if (searchQuery) {
+        filtered = filtered.filter(m => 
+          m.title.toLowerCase().includes(searchQuery) ||
+          (m.description && m.description.toLowerCase().includes(searchQuery)) ||
+          (m.cast && m.cast.toLowerCase().includes(searchQuery))
+        );
+      }
+
+      // Apply language filter
+      if (sidebarSelectedLanguages.length > 0) {
+        filtered = filtered.filter(m => sidebarSelectedLanguages.includes(m.language));
+      }
+
+      // Apply genre filter
+      if (sidebarSelectedGenres.length > 0) {
+        filtered = filtered.filter(m => {
+          const movieGenres = m.genres.split(',').map(g => g.trim());
+          return sidebarSelectedGenres.some(sg => movieGenres.includes(sg));
+        });
+      }
+
+      sidebarFilteredMovies = filtered;
+      displaySidebarResults(filtered);
+      
+      // Update filter button state
+      const filterBtn = document.getElementById('sidebarFilterBtn');
+      if (sidebarSelectedLanguages.length > 0 || sidebarSelectedGenres.length > 0) {
+        filterBtn.classList.add('active');
+      } else {
+        filterBtn.classList.remove('active');
+      }
+      
+      // Hide filter panel
+      document.getElementById('sidebarFilterPanel').classList.remove('show');
+    }
+
+    function clearSidebarFilters() {
+      sidebarSelectedLanguages = [];
+      sidebarSelectedGenres = [];
+      
+      document.querySelectorAll('.sidebar-filter-option').forEach(el => {
+        el.classList.remove('selected');
+      });
+      
+      document.getElementById('sidebarFilterBtn').classList.remove('active');
+      document.getElementById('sidebarFilterPanel').classList.remove('show');
+      
+      // Reapply search without filters
+      handleSidebarSearch({ target: document.getElementById('sidebarSearchInput') });
+    }
+
+    function toggleSidebarFilters() {
+      const panel = document.getElementById('sidebarFilterPanel');
+      panel.classList.toggle('show');
+    }
+
+    function handleSidebarSearch(e) {
+      clearTimeout(searchTimeout);
+      const query = e.target.value.trim().toLowerCase();
+      
+      searchTimeout = setTimeout(() => {
+        let results = [...sidebarMovies];
+        
+        if (query.length > 0) {
+          results = results.filter(m => 
+            m.title.toLowerCase().includes(query) ||
+            (m.description && m.description.toLowerCase().includes(query)) ||
+            (m.cast && m.cast.toLowerCase().includes(query))
+          );
+        }
+        
+        // Apply filters if any
+        if (sidebarSelectedLanguages.length > 0) {
+          results = results.filter(m => sidebarSelectedLanguages.includes(m.language));
+        }
+        
+        if (sidebarSelectedGenres.length > 0) {
+          results = results.filter(m => {
+            const movieGenres = m.genres.split(',').map(g => g.trim());
+            return sidebarSelectedGenres.some(sg => movieGenres.includes(sg));
+          });
+        }
+        
+        sidebarFilteredMovies = results;
+        displaySidebarResults(results);
+      }, 300);
+    }
+
+    function displaySidebarResults(movies) {
+      const container = document.getElementById('sidebarSearchResults');
+      const countEl = document.getElementById('sidebarResultsCount');
+      
+      countEl.textContent = `${movies.length} ${movies.length === 1 ? 'movie' : 'movies'} found`;
+      
+      if (movies.length === 0) {
+        container.innerHTML = '<div class="sidebar-empty">No movies found</div>';
+        return;
+      }
+      
+      container.innerHTML = movies.map(movie => `
+        <div class="sidebar-movie-item" onclick="openMovieModalFromSidebar(${movie.id})">
+          <img src="${movie.thumbnail}" alt="${movie.title}" class="sidebar-movie-thumb">
+          <div class="sidebar-movie-info">
+            <div class="sidebar-movie-title">${movie.title}</div>
+            <div class="sidebar-movie-meta">
+              <span class="sidebar-movie-rating">★ ${movie.rating.toFixed(1)}</span>
+              <span> • ${movie.year}</span>
+              <span> • ${movie.language}</span>
+            </div>
+            <span class="sidebar-movie-genre">${movie.genres}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openSearchSidebar() {
+      document.getElementById('searchSidebar').classList.add('open');
+      document.getElementById('searchOverlay').classList.add('show');
+      document.body.style.overflow = 'hidden';
+      
+      // Focus search input
+      setTimeout(() => {
+        document.getElementById('sidebarSearchInput').focus();
+      }, 100);
+    }
+
+    function closeSearchSidebar() {
+      document.getElementById('searchSidebar').classList.remove('open');
+      document.getElementById('searchOverlay').classList.remove('show');
+      document.body.style.overflow = 'auto';
+    }
+
+    function openMovieModalFromSidebar(movieId) {
+      // This function should trigger the modal from homepage
+      // If on homepage, call the existing openModal function
+      if (typeof openModal === 'function') {
+        const index = sidebarFilteredMovies.findIndex(m => m.id === movieId);
+        if (index !== -1) {
+          // Update the global movies array reference for the modal
+          if (typeof movies !== 'undefined') {
+            movies.length = 0;
+            movies.push(...sidebarFilteredMovies);
+          }
+          openModal(index);
+          closeSearchSidebar();
+        }
+      } else {
+        // If not on homepage, redirect to movie detail or landing page
+        window.location.href = `/movies/${movieId}/`;
+      }
+    }
+
+    // Close sidebar with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeSearchSidebar();
+      }
+    });
+
+    window.allMoviesData = [
+    {% for movie in all_movies %}
+    {
+      id: {{ movie.id }},
+      title: "{{ movie.title|escapejs }}",
+      year: {{ movie.year }},
+      description: "{{ movie.description|default:''|escapejs }}",
+      thumbnail: "{% if movie.thumbnail %}{{ movie.thumbnail.url }}{% else %}https://via.placeholder.com/200x300?text=No+Image{% endif %}",
+      video: "{% if movie.video %}{{ movie.video.url }}{% endif %}",
+      genres: "{{ movie.get_genres_display }}",
+      language: "{% if movie.language %}{{ movie.language.name }}{% else %}Unknown{% endif %}",
+      cast: "{{ movie.cast|default:''|escapejs }}",
+      rating: {{ movie.review_stars|default:0 }},
+      views: {{ movie.views|default:0 }},
+      length: "{{ movie.movie_length|default:'Unknown' }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
   </script>
   
   {% block extra_js %}{% endblock %}

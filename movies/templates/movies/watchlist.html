@@ -463,6 +463,31 @@
       font-size: 20px;
     }
   }
+
+  .notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    padding: 16px 24px;
+    border-radius: 8px;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    font-weight: 500;
+    animation: slideIn 0.3s ease-out;
+  }
+  .notification.info { background: #2196F3; }
+  .notification.error { background: #e50914; }
+  .notification.success { background: #4CAF50; }
+
+  @keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+  }
 </style>
 
 <div class="watchlist-header">
@@ -485,8 +510,8 @@
           {% endif %}
           <div class="movie-card-overlay">
             <h3>{{ movie.title }}</h3>
-            <p>{{ movie.year }}</p>
-            <span class="movie-genre">{{ movie.genre }}</span>
+            <p>{{ movie.year }}{% if movie.language %} • {{ movie.language.name }}{% endif %}</p>
+            <span class="movie-genre">{{ movie.get_genres_display }}</span>
           </div>
         </div>
       {% endfor %}
@@ -537,8 +562,12 @@
           <span class="modal-info-value" id="modalCast">Unknown</span>
         </div>
         <div class="modal-info-row">
-          <span class="modal-info-label">Genre:</span>
+          <span class="modal-info-label">Genres:</span>
           <span class="modal-info-value" id="modalGenre">Action</span>
+        </div>
+        <div class="modal-info-row">
+          <span class="modal-info-label">Language:</span>
+          <span class="modal-info-value" id="modalLanguage">Unknown</span>
         </div>
         <div class="modal-info-row">
           <span class="modal-info-label">Views:</span>
@@ -573,7 +602,8 @@
       description: "{{ movie.description|escapejs }}",
       thumbnail: "{% if movie.thumbnail %}{{ movie.thumbnail.url }}{% else %}https://via.placeholder.com/200x300?text=No+Image{% endif %}",
       video: "{% if movie.video %}{{ movie.video.url }}{% endif %}",
-      genre: "{{ movie.genre }}",
+      genres: "{{ movie.get_genres_display }}",
+      language: "{% if movie.language %}{{ movie.language.name }}{% else %}Unknown{% endif %}",
       cast: "{{ movie.cast|escapejs }}",
       length: "{{ movie.movie_length }}",
       rating: {{ movie.review_stars }},
@@ -596,7 +626,8 @@
     document.getElementById('modalLength').textContent = movie.length;
     document.getElementById('modalDescription').textContent = movie.description;
     document.getElementById('modalCast').textContent = movie.cast;
-    document.getElementById('modalGenre').textContent = movie.genre;
+    document.getElementById('modalGenre').textContent = movie.genres;
+    document.getElementById('modalLanguage').textContent = movie.language;
     document.getElementById('modalViews').textContent = formatViews(movie.views);
     
     modal.classList.add('active');
@@ -615,7 +646,7 @@
     if (movie && movie.video) {
       openVideoPlayer(movie);
     } else {
-      alert('Video not available');
+      showNotification('Video not available', 'error');
     }
   }
 
@@ -629,7 +660,6 @@
     videoModal.classList.add('active');
     document.body.style.overflow = 'hidden';
     
-    // Close movie details modal
     closeModal();
   }
 
@@ -671,17 +701,32 @@
         // Reload page to update the list
         location.reload();
       } else {
-        alert('Error: ' + data.message);
+        showNotification('Error: ' + data.message, 'error');
       }
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('An error occurred');
+      showNotification('An error occurred', 'error');
     });
   }
 
   function removeFromWatchlistModal() {
     removeFromWatchlist(currentMovieId);
+  }
+
+  function showNotification(message, type) {
+    const existing = document.querySelector('.notification');
+    if (existing) existing.remove();
+
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease-out';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
   }
 
   function getCookie(name) {
@@ -708,6 +753,7 @@
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       closeModal();
+      closeVideoPlayer();
     }
   });
 </script>
