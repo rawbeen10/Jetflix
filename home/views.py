@@ -4,9 +4,9 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.db.models import Q
+from django.db.models import Q, Count
 from .forms import CustomUserCreationForm
-from movies.models import Movie
+from movies.models import Movie, WatchHistory
 import logging
 
 logger = logging.getLogger(__name__)
@@ -109,15 +109,70 @@ def edit_profile_view(request):
         return redirect('home')
 
 
+def get_recommended_movies(user, min_watched_movies=3):
+    """
+    Get personalized movie recommendations based on user's watch history.
+    Returns movies from genres the user has watched before.
+    
+    Args:
+        user: The user to get recommendations for
+        min_watched_movies: Minimum number of movies user must watch before getting recommendations (default: 1)
+    """
+    if not user.is_authenticated:
+        return []
+    
+    
+    watch_history = WatchHistory.objects.filter(user=user).select_related('movie').prefetch_related('movie__genres')[:10]
+    
+    
+    watch_count = watch_history.count()
+    if watch_count < min_watched_movies:
+    
+        return None  
+    
+    
+    watched_movie_ids = [history.movie.id for history in watch_history]
+    watched_genres = set()
+    
+    for history in watch_history:
+        for genre in history.movie.genres.all():
+            watched_genres.add(genre.id)
+    
+    if not watched_genres:
+        return []
+    
+    
+    recommended_movies = Movie.objects.filter(
+        is_published=True,
+        genres__id__in=watched_genres
+    ).exclude(
+        id__in=watched_movie_ids
+    ).select_related('language').prefetch_related('genres').distinct().order_by('-views', '-review_stars')[:8]
+    
+    return recommended_movies
+
+
 def home_page(request):
     try:
-        # Get the 8 most recently added movies with prefetch
+
         recent_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').order_by('-id')[:8]
         
-        # Get trending movies (top 8 by views)
+    
         trending_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').order_by('-views')[:8]
         
-        # Get ALL movies for search sidebar (only if user is authenticated)
+        
+        recommended_movies = None
+        is_new_user = False
+        
+        if request.user.is_authenticated:
+            
+            recommended_movies = get_recommended_movies(request.user, min_watched_movies=1)
+            if recommended_movies is None:
+                
+                is_new_user = True
+                recommended_movies = []
+        
+        
         all_movies = []
         if request.user.is_authenticated:
             all_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').all()
@@ -125,7 +180,9 @@ def home_page(request):
         return render(request, 'home/homepage.html', {
             'movies': recent_movies,
             'trending_movies': trending_movies,
-            'all_movies': all_movies,  # For search sidebar
+            'recommended_movies': recommended_movies,
+            'is_new_user': is_new_user,
+            'all_movies': all_movies, 
         })
     except Exception as e:
         logger.error(f"Error loading home page: {str(e)}")
@@ -133,13 +190,15 @@ def home_page(request):
         return render(request, 'home/homepage.html', {
             'movies': [], 
             'trending_movies': [],
+            'recommended_movies': [],
+            'is_new_user': False,
             'all_movies': []
         })
 
 
 def homepage_view(request):
     try:
-        # Get ALL movies for search sidebar (only if user is authenticated)
+        
         all_movies = []
         if request.user.is_authenticated:
             all_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').all()
@@ -153,7 +212,7 @@ def homepage_view(request):
         return render(request, 'home/homepage.html', {'all_movies': []})
 
 
-# OPTIONAL: API endpoint for AJAX search (if you want real-time backend search)
+
 @login_required(login_url='login')
 def search_movies_api(request):
     """
@@ -165,10 +224,10 @@ def search_movies_api(request):
         language = request.GET.get('language', '')
         genres = request.GET.getlist('genres[]')
         
-        # Start with all published movies
+        
         movies = Movie.objects.filter(is_published=True)
         
-        # Apply search query
+    
         if query:
             movies = movies.filter(
                 Q(title__icontains=query) |
@@ -176,19 +235,19 @@ def search_movies_api(request):
                 Q(cast__icontains=query)
             )
         
-        # Apply language filter
+        
         if language:
             movies = movies.filter(language__name=language)
         
-        # Apply genre filter
+        
         if genres:
             for genre in genres:
                 movies = movies.filter(genres__name__icontains=genre)
         
-        # Get results with related data
+        
         movies = movies.select_related('language').prefetch_related('genres').distinct()[:50]
         
-        # Format response
+        
         data = [{
             'id': movie.id,
             'title': movie.title,
