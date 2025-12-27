@@ -1,0 +1,280 @@
+{% extends 'adminpanel/base.html' %}
+
+{% block content %}
+<style>
+  .users-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .users-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .stat-card {
+    background: #222;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    min-width: 120px;
+  }
+  
+  .stat-number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #e50914;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+    color: #ccc;
+    margin-top: 5px;
+  }
+  
+  .users-table {
+    background: #222;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .users-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .users-table th {
+    background: #333;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #fff;
+    border-bottom: 2px solid #444;
+  }
+  
+  .users-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #333;
+    vertical-align: middle;
+  }
+  
+  .users-table tr:hover {
+    background: #2a2a2a;
+  }
+  
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e50914;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  .user-details h4 {
+    margin: 0;
+    font-size: 14px;
+    color: #fff;
+  }
+  
+  .user-details p {
+    margin: 2px 0 0 0;
+    font-size: 12px;
+    color: #888;
+  }
+  
+  .status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  
+  .status-active {
+    background: #28a745;
+    color: white;
+  }
+  
+  .status-staff {
+    background: #e50914;
+    color: white;
+  }
+  
+  .status-inactive {
+    background: #6c757d;
+    color: white;
+  }
+  
+  .stats-cell {
+    text-align: center;
+    font-weight: 600;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  .pagination a, .pagination span {
+    padding: 8px 12px;
+    background: #333;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+  }
+  
+  .pagination a:hover {
+    background: #e50914;
+  }
+  
+  .pagination .current {
+    background: #e50914;
+  }
+  
+  .search-box {
+    padding: 8px 12px;
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #fff;
+    width: 250px;
+  }
+  
+  .search-box:focus {
+    outline: none;
+    border-color: #e50914;
+  }
+</style>
+
+<div class="users-header">
+  <h1>Users Management</h1>
+  <input type="text" class="search-box" placeholder="Search users..." id="userSearch">
+</div>
+
+<div class="users-stats">
+  <div class="stat-card">
+    <div class="stat-number">{{ page_obj.paginator.count }}</div>
+    <div class="stat-label">Total Users</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ users|length }}</div>
+    <div class="stat-label">On This Page</div>
+  </div>
+</div>
+
+<div class="users-table">
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Email</th>
+        <th>Status</th>
+        <th>Movies Watched</th>
+        <th>Reviews</th>
+        <th>Joined</th>
+        <th>Last Login</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>
+          <div class="user-info">
+            <div class="user-avatar">
+              {{ user.first_name|first|default:user.username|first|upper }}
+            </div>
+            <div class="user-details">
+              <h4>
+                {% if user.first_name or user.last_name %}
+                  {{ user.first_name }} {{ user.last_name }}
+                {% else %}
+                  {{ user.username }}
+                {% endif %}
+              </h4>
+              <p>@{{ user.username }}</p>
+            </div>
+          </div>
+        </td>
+        <td>{{ user.email|default:"No email" }}</td>
+        <td>
+          {% if user.is_superuser %}
+            <span class="status-badge status-staff">Super Admin</span>
+          {% elif user.is_staff %}
+            <span class="status-badge status-staff">Staff</span>
+          {% elif user.is_active %}
+            <span class="status-badge status-active">Active</span>
+          {% else %}
+            <span class="status-badge status-inactive">Inactive</span>
+          {% endif %}
+        </td>
+        <td class="stats-cell">{{ user.movies_watched }}</td>
+        <td class="stats-cell">{{ user.reviews_count }}</td>
+        <td>{{ user.date_joined|date:"M d, Y" }}</td>
+        <td>
+          {% if user.last_login %}
+            {{ user.last_login|date:"M d, Y" }}
+          {% else %}
+            Never
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
+          No users found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="pagination">
+  {% if page_obj.has_previous %}
+    <a href="?page=1">&laquo; First</a>
+    <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+  {% endif %}
+  
+  <span class="current">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  </span>
+  
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+    <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+  {% endif %}
+</div>
+{% endif %}
+
+<script>
+// Simple search functionality
+document.getElementById('userSearch').addEventListener('input', function(e) {
+  const searchTerm = e.target.value.toLowerCase();
+  const rows = document.querySelectorAll('tbody tr');
+  
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(searchTerm) ? '' : 'none';
+  });
+});
+</script>
+
+{% endblock %}

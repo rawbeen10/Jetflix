@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Movie, Watchlist, Review, Language, Genre
+from .models import Movie, Watchlist, Review, Language, Genre, WatchHistory, UserInteraction
 
 @admin.register(Language)
 class LanguageAdmin(admin.ModelAdmin):
@@ -35,3 +35,17 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ['rating', 'created_at']
     search_fields = ['user__username', 'movie__title', 'review_text']
     readonly_fields = ['created_at', 'updated_at']
+
+@admin.register(WatchHistory)
+class WatchHistoryAdmin(admin.ModelAdmin):
+    list_display = ['user', 'movie', 'watched_at']
+    list_filter = ['watched_at']
+    search_fields = ['user__username', 'movie__title']
+    readonly_fields = ['watched_at']
+
+@admin.register(UserInteraction)
+class UserInteractionAdmin(admin.ModelAdmin):
+    list_display = ['user', 'movie', 'interaction_type', 'score', 'created_at']
+    list_filter = ['interaction_type', 'created_at']
+    search_fields = ['user__username', 'movie__title']
+    readonly_fields = ['created_at']

@@ -16,18 +16,117 @@
     padding: 40px 60px;
   }
 
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
   .section h2 {
     font-size: 28px;
-    margin-bottom: 20px;
+    margin: 0;
     font-weight: 600;
     color: #fff;
   }
 
-  /* Movie Grid */
+  .search-container {
+    position: relative;
+    width: 300px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    background-color: #222;
+    border: 2px solid #333;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    transition: all 0.3s;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #e50914;
+    background-color: #2a2a2a;
+  }
+
+  .search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    pointer-events: none;
+  }
+
+  /* Category Sections */
+  .category-section {
+    margin-bottom: 50px;
+  }
+
+  .category-section h3 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #fff;
+    font-weight: 600;
+    border-bottom: 2px solid #e50914;
+    padding-bottom: 10px;
+  }
+
+  /* Movie Grid - Carousel */
   .movies {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    display: flex;
+    overflow-x: hidden;
     gap: 15px;
+    scroll-behavior: smooth;
+  }
+
+  .movie-carousel {
+    position: relative;
+  }
+
+  .carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    color: #fff;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    z-index: 10;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .carousel-btn:hover {
+    background: rgba(229, 9, 20, 0.8);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .carousel-btn.prev {
+    left: -25px;
+  }
+
+  .carousel-btn.next {
+    right: -25px;
+  }
+
+  .carousel-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .carousel-btn:disabled:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: translateY(-50%);
   }
 
   /* Movie Card */
@@ -39,6 +138,9 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background-color: #1a1a1a;
     aspect-ratio: 2/3;
+    width: 200px;
+    height: 300px;
+    flex-shrink: 0;
   }
 
   .movie-card img {
@@ -111,6 +213,99 @@
   .notification.info { background: #2196F3; }
   .notification.error { background: #e50914; }
   .notification.success { background: #4CAF50; }
+
+  /* Enhanced Alert Modal */
+  .alert-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .alert-content {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 450px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+    animation: slideUp 0.3s ease;
+  }
+
+  .alert-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, #e50914 0%, #ff1744 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    color: white;
+    box-shadow: 0 8px 24px rgba(229, 9, 20, 0.3);
+  }
+
+  .alert-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+
+  .alert-message {
+    font-size: 16px;
+    color: #b3b3b3;
+    line-height: 1.5;
+    margin-bottom: 30px;
+  }
+
+  .alert-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .alert-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 100px;
+  }
+
+  .alert-btn-primary {
+    background: linear-gradient(135deg, #e50914 0%, #ff1744 100%);
+    color: white;
+  }
+
+  .alert-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(229, 9, 20, 0.4);
+  }
+
+  .alert-btn-secondary {
+    background: transparent;
+    color: #b3b3b3;
+    border: 1px solid #444;
+  }
+
+  .alert-btn-secondary:hover {
+    background: #333;
+    color: #fff;
+  }
 
   @keyframes slideIn {
     from { transform: translateX(400px); opacity: 0; }
@@ -318,43 +513,237 @@
 
   .review-section h3 {
     font-size: 20px;
-    margin-bottom: 15px;
-  }
-
-  .review-form textarea {
-    width: 100%;
-    padding: 15px;
-    background-color: #242424;
-    border: 1px solid #333;
-    border-radius: 6px;
+    margin-bottom: 20px;
     color: #fff;
-    font-size: 14px;
-    resize: vertical;
-    min-height: 100px;
-    font-family: inherit;
   }
 
-  .review-form textarea:focus {
-    outline: none;
-    border-color: #e50914;
+  .review-input {
+    background-color: #222;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
   }
 
   .star-rating {
     display: flex;
     gap: 5px;
-    margin: 15px 0;
-    font-size: 24px;
+    margin-bottom: 15px;
   }
 
   .star {
+    font-size: 24px;
+    color: #666;
     cursor: pointer;
-    color: #555;
     transition: color 0.2s;
   }
 
-  .star.active,
-  .star:hover {
+  .star:hover,
+  .star.active {
     color: #ffd700;
+  }
+
+  .star.hover {
+    color: #ffd700;
+  }
+
+  #reviewText {
+    width: 100%;
+    min-height: 80px;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 12px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    margin-bottom: 15px;
+  }
+
+  #reviewText:focus {
+    outline: none;
+    border-color: #e50914;
+  }
+
+  .review-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-cancel {
+    background-color: #666;
+    color: #fff;
+  }
+
+  .btn-cancel:hover {
+    background-color: #777;
+  }
+
+  .reviews-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .loading-reviews {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+  }
+
+  .review-item {
+    background-color: #1a1a1a;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border-left: 3px solid #e50914;
+  }
+
+  .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .review-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .review-username {
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .review-rating {
+    color: #ffd700;
+    font-size: 14px;
+  }
+
+  .review-time {
+    color: #888;
+    font-size: 12px;
+  }
+
+  .review-actions-btn {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-edit-review,
+  .btn-delete-review {
+    padding: 4px 8px;
+    font-size: 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-edit-review {
+    background-color: #0066cc;
+    color: #fff;
+  }
+
+  .btn-edit-review:hover {
+    background-color: #0052a3;
+  }
+
+  .btn-delete-review {
+    background-color: #cc0000;
+    color: #fff;
+  }
+
+  .btn-delete-review:hover {
+    background-color: #a30000;
+  }
+
+  .review-text {
+    color: #e5e5e5;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+
+  .no-reviews {
+    text-align: center;
+    color: #888;
+    padding: 30px;
+    font-style: italic;
+  }
+
+  /* Recommendations Section */
+  .recommendations-section {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid #333;
+  }
+
+  .recommendation-group {
+    margin-bottom: 30px;
+  }
+
+  .recommendation-group h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #fff;
+  }
+
+  .recommendations-grid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+
+  .recommendations-grid::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .recommendations-grid::-webkit-scrollbar-track {
+    background: #333;
+    border-radius: 3px;
+  }
+
+  .recommendations-grid::-webkit-scrollbar-thumb {
+    background: #666;
+    border-radius: 3px;
+  }
+
+  .recommendation-card {
+    flex-shrink: 0;
+    width: 120px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .recommendation-card:hover {
+    transform: scale(1.05);
+  }
+
+  .recommendation-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+
+  .recommendation-card h4 {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .recommendation-card p {
+    font-size: 11px;
+    color: #b3b3b3;
+    margin: 0;
   }
 
   /* Video Player Modal */
@@ -433,9 +822,37 @@
       padding: 30px 25px;
     }
 
-    .movies {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 10px;
+    .section-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 15px;
+    }
+
+    .search-container {
+      width: 100%;
+    }
+
+    .category-section {
+      margin-bottom: 40px;
+    }
+
+    .movie-card {
+      width: 150px;
+      height: 225px;
+    }
+
+    .carousel-btn {
+      width: 40px;
+      height: 40px;
+      font-size: 16px;
+    }
+
+    .carousel-btn.prev {
+      left: -20px;
+    }
+
+    .carousel-btn.next {
+      right: -20px;
     }
 
     .modal-hero {
@@ -466,8 +883,19 @@
 </style>
 
 <section class="section">
-  <h2>All Movies</h2>
-  <div class="movies">
+  <div class="section-header">
+    <h2>Browse Movies</h2>
+    <div class="search-container">
+      <input type="text" id="movieSearch" placeholder="Search movies..." class="search-input">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+    </div>
+  </div>
+  
+  <!-- Search Results -->
+  <div class="movies" id="moviesGrid" style="display: none;">
     {% if movies %}
       {% for movie in movies %}
         <div class="movie-card" onclick="openModal({{ forloop.counter0 }})">
@@ -483,9 +911,71 @@
           </div>
         </div>
       {% endfor %}
-    {% else %}
-      <p style="color:#ccc; padding: 20px;">No movies available yet. Check back soon!</p>
     {% endif %}
+  </div>
+  <div class="no-results" id="noResults" style="display: none;">
+    <p style="color:#ccc; padding: 20px; text-align: center;">No movies found matching your search.</p>
+  </div>
+  
+  <!-- Browse Content -->
+  <div id="browseContent">
+    <!-- Browse by Genre -->
+    {% for genre in genres %}
+    <div class="category-section">
+      <h3>{{ genre.name }}</h3>
+      <div class="movie-carousel">
+        <button class="carousel-btn prev" onclick="scrollCarousel('genre-{{ forloop.counter0 }}', -1)">&lt;</button>
+        <div class="movies" id="genre-{{ forloop.counter0 }}">
+          {% for movie in movies %}
+            {% if genre.name in movie.get_genres_display %}
+            <div class="movie-card" onclick="openModal({{ forloop.counter0 }})">
+              {% if movie.thumbnail %}
+                <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
+              {% else %}
+                <img src="https://via.placeholder.com/200x300?text=No+Image" alt="{{ movie.title }}">
+              {% endif %}
+              <div class="movie-card-overlay">
+                <h3>{{ movie.title }}</h3>
+                <p>{{ movie.year }}{% if movie.language %} • {{ movie.language.name }}{% endif %}</p>
+                <span class="movie-genre">{{ movie.get_genres_display }}</span>
+              </div>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <button class="carousel-btn next" onclick="scrollCarousel('genre-{{ forloop.counter0 }}', 1)">&gt;</button>
+      </div>
+    </div>
+    {% endfor %}
+    
+    <!-- Browse by Language -->
+    {% for language in languages %}
+    <div class="category-section">
+      <h3>{{ language.name }}</h3>
+      <div class="movie-carousel">
+        <button class="carousel-btn prev" onclick="scrollCarousel('lang-{{ forloop.counter0 }}', -1)">&lt;</button>
+        <div class="movies" id="lang-{{ forloop.counter0 }}">
+          {% for movie in movies %}
+            {% if movie.language.name == language.name %}
+            <div class="movie-card" onclick="openModal({{ forloop.counter0 }})">
+              {% if movie.thumbnail %}
+                <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
+              {% else %}
+                <img src="https://via.placeholder.com/200x300?text=No+Image" alt="{{ movie.title }}">
+              {% endif %}
+              <div class="movie-card-overlay">
+                <h3>{{ movie.title }}</h3>
+                <p>{{ movie.year }}{% if movie.language %} • {{ movie.language.name }}{% endif %}</p>
+                <span class="movie-genre">{{ movie.get_genres_display }}</span>
+              </div>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <button class="carousel-btn next" onclick="scrollCarousel('lang-{{ forloop.counter0 }}', 1)">&gt;</button>
+      </div>
+    </div>
+    {% endfor %}
   </div>
 </section>
 
@@ -542,17 +1032,44 @@
       </div>
 
       <div class="review-section">
-        <h3>Leave a Review</h3>
-        <div class="star-rating" id="starRating">
-          <span class="star" onclick="setRating(1)">★</span>
-          <span class="star" onclick="setRating(2)">★</span>
-          <span class="star" onclick="setRating(3)">★</span>
-          <span class="star" onclick="setRating(4)">★</span>
-          <span class="star" onclick="setRating(5)">★</span>
+        <h3>Reviews</h3>
+        
+        <!-- Review Input Form -->
+        <div class="review-input" id="reviewInput">
+          <div class="star-rating" id="starRating">
+            <span class="star" data-rating="1">★</span>
+            <span class="star" data-rating="2">★</span>
+            <span class="star" data-rating="3">★</span>
+            <span class="star" data-rating="4">★</span>
+            <span class="star" data-rating="5">★</span>
+          </div>
+          <textarea id="reviewText" placeholder="Write your review..." maxlength="1000"></textarea>
+          <div class="review-actions">
+            <button id="submitReview" class="btn btn-secondary">Submit Review</button>
+            <button id="cancelEdit" class="btn btn-cancel" style="display: none;">Cancel</button>
+          </div>
         </div>
-        <div class="review-form">
-          <textarea placeholder="Write your review here..." id="reviewText"></textarea>
-          <button class="btn btn-secondary" style="margin-top: 15px;" onclick="submitReview()">Submit Review</button>
+
+        <!-- Reviews List -->
+        <div class="reviews-list" id="reviewsList">
+          <div class="loading-reviews">Loading reviews...</div>
+        </div>
+      </div>
+      
+      <!-- Recommendations Section -->
+      <div class="recommendations-section">
+        <div id="similarMovies" class="recommendation-group">
+          <h3>Users who watched this also watched</h3>
+          <div class="recommendations-grid" id="similarMoviesGrid">
+            <div class="loading-reviews">Loading recommendations...</div>
+          </div>
+        </div>
+        
+        <div id="userRecommendations" class="recommendation-group" style="display: none;">
+          <h3>For you, we recommend</h3>
+          <div class="recommendations-grid" id="userRecommendationsGrid">
+            <div class="loading-reviews">Loading recommendations...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -570,6 +1087,19 @@
       <source src="" type="video/mp4">
       Your browser does not support the video tag.
     </video>
+  </div>
+</div>
+
+<!-- Enhanced Alert Modal -->
+<div class="alert-modal" id="alertModal">
+  <div class="alert-content">
+    <div class="alert-icon" id="alertIcon">🔒</div>
+    <h3 class="alert-title" id="alertTitle">Login Required</h3>
+    <p class="alert-message" id="alertMessage">Please sign in to watch movies and access all features.</p>
+    <div class="alert-buttons">
+      <button class="alert-btn alert-btn-primary" onclick="redirectToLogin()">Login Now</button>
+      <button class="alert-btn alert-btn-secondary" onclick="closeAlert()">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -601,8 +1131,16 @@
 
   let currentRating = 0;
   let currentMovieId = null;
+  let editingReviewId = null;
+  let allMovies = [...movies];
+  let searchTimeout;
 
   function openModal(index) {
+    if (!isAuthenticated) {
+      showLoginAlert('Please login to view movie details and watch movies.');
+      return;
+    }
+    
     const movie = movies[index];
     currentMovieId = movie.id;
     const modal = document.getElementById('movieModal');
@@ -624,6 +1162,15 @@
     // Show modal
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    
+    // Load reviews for this movie
+    loadReviews(movie.id);
+    
+    // Load recommendations
+    loadSimilarMovies(movie.id);
+    if (isAuthenticated) {
+      loadUserRecommendations();
+    }
   }
 
   function closeModal() {
@@ -632,8 +1179,7 @@
     document.body.style.overflow = 'auto';
     currentRating = 0;
     currentMovieId = null;
-    updateStars();
-    document.getElementById('reviewText').value = '';
+    resetReviewForm();
     document.getElementById('likeIcon').textContent = '👍';
   }
 
@@ -648,10 +1194,30 @@
     if (movie && movie.video) {
       // Increment view count before playing
       incrementViewCount(currentMovieId);
-      openVideoPlayer(movie);
+      // Use the enhanced JetFlix player
+      if (typeof openJetflixPlayer === 'function') {
+        openJetflixPlayer(movie.video, movie.title);
+        closeModal();
+      } else {
+        // Fallback to basic video player
+        openBasicVideoPlayer(movie);
+      }
     } else {
       showNotification('Video not available', 'error');
     }
+  }
+
+  function openBasicVideoPlayer(movie) {
+    const videoModal = document.getElementById('videoPlayerModal');
+    const videoPlayer = document.getElementById('videoPlayer');
+    const videoTitle = document.getElementById('videoPlayerTitle');
+    
+    videoTitle.textContent = movie.title;
+    videoPlayer.src = movie.video;
+    videoModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    closeModal();
   }
 
   function incrementViewCount(movieId) {
@@ -680,26 +1246,24 @@
   }
 
   function openVideoPlayer(movie) {
-    const videoModal = document.getElementById('videoPlayerModal');
-    const videoPlayer = document.getElementById('videoPlayer');
-    const videoTitle = document.getElementById('videoPlayerTitle');
-    
-    videoTitle.textContent = movie.title;
-    videoPlayer.src = movie.video;
-    videoModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    
+    openJetflixPlayer(movie.video, movie.title);
     closeModal();
   }
 
   function closeVideoPlayer() {
-    const videoModal = document.getElementById('videoPlayerModal');
-    const videoPlayer = document.getElementById('videoPlayer');
-    
-    videoPlayer.pause();
-    videoPlayer.src = '';
-    videoModal.classList.remove('active');
-    document.body.style.overflow = 'auto';
+    // Close enhanced JetFlix player if available
+    if (typeof closeJetflixPlayer === 'function') {
+      closeJetflixPlayer();
+    } else {
+      // Fallback to basic video player
+      const videoModal = document.getElementById('videoPlayerModal');
+      const videoPlayer = document.getElementById('videoPlayer');
+      
+      videoPlayer.pause();
+      videoPlayer.src = '';
+      videoModal.classList.remove('active');
+      document.body.style.overflow = 'auto';
+    }
   }
 
   function formatViews(views) {
@@ -709,26 +1273,6 @@
       return (views / 1000).toFixed(1) + 'K views';
     }
     return views + ' views';
-  }
-
-  function setRating(rating) {
-    if (!isAuthenticated) {
-      showNotification('Please login to leave a review', 'info');
-      return;
-    }
-    currentRating = rating;
-    updateStars();
-  }
-
-  function updateStars() {
-    const stars = document.querySelectorAll('.star');
-    stars.forEach((star, index) => {
-      if (index < currentRating) {
-        star.classList.add('active');
-      } else {
-        star.classList.remove('active');
-      }
-    });
   }
 
   function addToWatchlist() {
@@ -787,63 +1331,64 @@
   function submitReview() {
     if (!isAuthenticated) {
       showNotification('Please login to submit a review', 'info');
-      setTimeout(() => {
-        window.location.href = "{% url 'login' %}?next={{ request.path }}";
-      }, 1500);
-      return;
-    }
-
-    const reviewText = document.getElementById('reviewText').value;
-    
-    if (currentRating === 0) {
-      showNotification('Please select a rating!', 'error');
       return;
     }
     
-    if (!reviewText.trim()) {
-      showNotification('Please write a review!', 'error');
+    if (!currentMovieId || currentRating === 0) {
+      showNotification('Please select a rating', 'error');
       return;
     }
     
-    // Make AJAX request to submit review
-    fetch('/api/reviews/', {
+    const reviewText = document.getElementById('reviewText').value.trim();
+    const submitBtn = document.getElementById('submitReview');
+    
+    if (reviewText.length > 1000) {
+      showNotification('Review text too long (max 1000 characters)', 'error');
+      return;
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = editingReviewId ? 'Updating...' : 'Submitting...';
+    
+    const url = editingReviewId ? 
+      `/movies/api/reviews/edit/${editingReviewId}/` : 
+      '/movies/api/reviews/add/';
+    
+    const payload = editingReviewId ? 
+      { rating: currentRating, review_text: reviewText } :
+      { movie_id: currentMovieId, rating: currentRating, review_text: reviewText };
+    
+    fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': getCookie('csrftoken')
       },
-      body: JSON.stringify({
-        movie_id: currentMovieId,
-        rating: currentRating,
-        text: reviewText
-      })
+      body: JSON.stringify(payload)
     })
     .then(response => response.json())
     .then(data => {
-      showNotification(`Review submitted! Rating: ${currentRating} stars`, 'success');
-      currentRating = 0;
-      updateStars();
-      document.getElementById('reviewText').value = '';
+      if (data.status === 'success') {
+        showNotification(data.message, 'success');
+        loadReviews(currentMovieId);
+        resetReviewForm();
+        updateMovieRating(currentMovieId, data.average_rating);
+      } else {
+        showNotification(data.message, 'error');
+      }
     })
     .catch(error => {
-      showNotification(`Review submitted! Rating: ${currentRating} stars`, 'success');
-      currentRating = 0;
-      updateStars();
-      document.getElementById('reviewText').value = '';
+      console.error('Error submitting review:', error);
+      showNotification('Error submitting review', 'error');
+    })
+    .finally(() => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Review';
     });
   }
 
   function handleLoginRequired(action) {
-    showNotification('Please login to continue', 'info');
-    
-    if (currentMovieId) {
-      sessionStorage.setItem('movieToWatch', currentMovieId);
-    }
-    sessionStorage.setItem('redirectAfterLogin', action);
-    
-    setTimeout(() => {
-      window.location.href = "{% url 'login' %}?next={{ request.path }}";
-    }, 1500);
+    showLoginAlert('Please login to watch movies and access all features.');
   }
 
   function showNotification(message, type) {
@@ -877,6 +1422,128 @@
     return cookieValue;
   }
 
+  // Review System Functions
+  function loadReviews(movieId) {
+    const reviewsList = document.getElementById('reviewsList');
+    reviewsList.innerHTML = '<div class="loading-reviews">Loading reviews...</div>';
+    
+    fetch(`/movies/api/reviews/${movieId}/`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          displayReviews(data.reviews, data.average_rating);
+          updateMovieRating(movieId, data.average_rating);
+        } else {
+          reviewsList.innerHTML = '<div class="no-reviews">Error loading reviews</div>';
+        }
+      })
+      .catch(error => {
+        console.error('Error loading reviews:', error);
+        reviewsList.innerHTML = '<div class="no-reviews">Error loading reviews</div>';
+      });
+  }
+
+  function displayReviews(reviews, averageRating) {
+    const reviewsList = document.getElementById('reviewsList');
+    
+    if (reviews.length === 0) {
+      reviewsList.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to review!</div>';
+      return;
+    }
+    
+    const reviewsHTML = reviews.map(review => `
+      <div class="review-item" data-review-id="${review.id}">
+        <div class="review-header">
+          <div class="review-user">
+            <span class="review-username">${review.user}</span>
+            <span class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5-review.rating)}</span>
+            <span class="review-time">${review.created_at}</span>
+          </div>
+          ${review.is_owner ? `
+            <div class="review-actions-btn">
+              <button class="btn-edit-review" onclick="editReview(${review.id}, ${review.rating}, '${review.review_text.replace(/'/g, "\\'")}')">Edit</button>
+              <button class="btn-delete-review" onclick="deleteReview(${review.id})">Delete</button>
+            </div>
+          ` : ''}
+        </div>
+        <div class="review-text">${review.review_text}</div>
+      </div>
+    `).join('');
+    
+    reviewsList.innerHTML = reviewsHTML;
+  }
+
+  function updateMovieRating(movieId, newRating) {
+    // Update rating in movies array
+    const movie = movies.find(m => m.id === movieId);
+    if (movie) movie.rating = newRating;
+    
+    // Update modal display
+    document.getElementById('modalRating').textContent = `★ ${newRating.toFixed(1)}`;
+  }
+
+  function editReview(reviewId, rating, reviewText) {
+    editingReviewId = reviewId;
+    currentRating = rating;
+    
+    // Update star display
+    updateStarDisplay(rating);
+    
+    // Set review text
+    document.getElementById('reviewText').value = reviewText;
+    
+    // Update buttons
+    document.getElementById('submitReview').textContent = 'Update Review';
+    document.getElementById('cancelEdit').style.display = 'inline-block';
+    
+    // Scroll to review form
+    document.getElementById('reviewInput').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function deleteReview(reviewId) {
+    if (!confirm('Are you sure you want to delete this review?')) {
+      return;
+    }
+    
+    fetch(`/movies/api/reviews/delete/${reviewId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        showNotification(data.message, 'success');
+        loadReviews(currentMovieId);
+        updateMovieRating(currentMovieId, data.average_rating);
+      } else {
+        showNotification(data.message, 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting review:', error);
+      showNotification('Error deleting review', 'error');
+    });
+  }
+
+  function resetReviewForm() {
+    currentRating = 0;
+    editingReviewId = null;
+    document.getElementById('reviewText').value = '';
+    document.getElementById('submitReview').textContent = 'Submit Review';
+    document.getElementById('cancelEdit').style.display = 'none';
+    updateStarDisplay(0);
+  }
+
+  function updateStarDisplay(rating) {
+    const stars = document.querySelectorAll('.star');
+    stars.forEach((star, index) => {
+      star.classList.toggle('active', index < rating);
+    });
+  }
+
   // Close modal when clicking outside
   document.getElementById('movieModal').addEventListener('click', function(e) {
     if (e.target === this) {
@@ -904,7 +1571,240 @@
         }
       }
     }
+    
+    // Star rating functionality
+    const stars = document.querySelectorAll('.star');
+    stars.forEach((star, index) => {
+      star.addEventListener('click', function() {
+        if (!isAuthenticated) {
+          showNotification('Please login to leave a review', 'info');
+          return;
+        }
+        currentRating = index + 1;
+        updateStarDisplay(currentRating);
+      });
+      
+      star.addEventListener('mouseenter', function() {
+        const hoverRating = index + 1;
+        stars.forEach((s, i) => {
+          s.classList.toggle('hover', i < hoverRating);
+        });
+      });
+    });
+    
+    // Remove hover effect when leaving star container
+    document.getElementById('starRating').addEventListener('mouseleave', function() {
+      stars.forEach(star => star.classList.remove('hover'));
+    });
+    
+    // Submit review button
+    document.getElementById('submitReview').addEventListener('click', submitReview);
+    
+    // Cancel edit button
+    document.getElementById('cancelEdit').addEventListener('click', resetReviewForm);
+    
+    // Search functionality
+    const searchInput = document.getElementById('movieSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', handleSearch);
+    }
+    
+    // Initialize carousels
+    initializeCarousels();
   });
+
+  function scrollCarousel(carouselId, direction) {
+    const carousel = document.getElementById(carouselId);
+    const cardWidth = 215; // 200px width + 15px gap
+    const scrollAmount = cardWidth * 6; // Scroll 6 items at a time
+    
+    carousel.scrollBy({
+      left: direction * scrollAmount,
+      behavior: 'smooth'
+    });
+  }
+
+  function initializeCarousels() {
+    // Update button states for all carousels
+    const carousels = document.querySelectorAll('.movies');
+    carousels.forEach(carousel => {
+      updateCarouselButtons(carousel);
+      carousel.addEventListener('scroll', () => updateCarouselButtons(carousel));
+    });
+  }
+
+  function updateCarouselButtons(carousel) {
+    const prevBtn = carousel.parentElement.querySelector('.prev');
+    const nextBtn = carousel.parentElement.querySelector('.next');
+    
+    if (prevBtn && nextBtn) {
+      prevBtn.disabled = carousel.scrollLeft <= 0;
+      nextBtn.disabled = carousel.scrollLeft >= carousel.scrollWidth - carousel.clientWidth;
+    }
+  }
+
+  function handleSearch(e) {
+    clearTimeout(searchTimeout);
+    const query = e.target.value.trim().toLowerCase();
+    
+    if (query === '') {
+      showBrowseContent();
+    } else {
+      searchTimeout = setTimeout(() => {
+        const filtered = allMovies.filter(movie => 
+          movie.title.toLowerCase().includes(query) ||
+          (movie.description && movie.description.toLowerCase().includes(query)) ||
+          (movie.cast && movie.cast.toLowerCase().includes(query)) ||
+          (movie.genres && movie.genres.toLowerCase().includes(query))
+        );
+        displaySearchResults(filtered);
+      }, 300);
+    }
+  }
+
+  function displaySearchResults(moviesToShow) {
+    document.getElementById('browseContent').style.display = 'none';
+    
+    const moviesGrid = document.getElementById('moviesGrid');
+    const noResults = document.getElementById('noResults');
+    
+    if (moviesToShow.length === 0) {
+      moviesGrid.style.display = 'none';
+      noResults.style.display = 'block';
+    } else {
+      moviesGrid.style.display = 'grid';
+      noResults.style.display = 'none';
+      
+      const moviesHTML = moviesToShow.map((movie, index) => `
+        <div class="movie-card" onclick="openModalFromSearch(${movie.id})">
+          <img src="${movie.thumbnail}" alt="${movie.title}">
+          <div class="movie-card-overlay">
+            <h3>${movie.title}</h3>
+            <p>${movie.year} • ${movie.language}</p>
+            <span class="movie-genre">${movie.genres}</span>
+          </div>
+        </div>
+      `).join('');
+      
+      moviesGrid.innerHTML = moviesHTML;
+    }
+  }
+
+  function showBrowseContent() {
+    document.getElementById('browseContent').style.display = 'block';
+    document.getElementById('moviesGrid').style.display = 'none';
+    document.getElementById('noResults').style.display = 'none';
+    document.getElementById('movieSearch').value = '';
+  }
+
+  function openModalFromSearch(movieId) {
+    const movieIndex = allMovies.findIndex(m => m.id === movieId);
+    if (movieIndex !== -1) {
+      // Update movies array for modal
+      movies.length = 0;
+      movies.push(...allMovies);
+      openModal(movieIndex);
+    }
+  }
+
+  // Recommendation Functions
+  function loadSimilarMovies(movieId) {
+    const similarGrid = document.getElementById('similarMoviesGrid');
+    similarGrid.innerHTML = '<div class="loading-reviews">Loading recommendations...</div>';
+    
+    fetch(`/movies/api/recommendations/similar/${movieId}/`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          displayRecommendations(data.movies, 'similarMoviesGrid');
+        } else {
+          similarGrid.innerHTML = '<div class="no-reviews">No similar movies found</div>';
+        }
+      })
+      .catch(error => {
+        console.error('Error loading similar movies:', error);
+        similarGrid.innerHTML = '<div class="no-reviews">Error loading recommendations</div>';
+      });
+  }
+
+  function loadUserRecommendations() {
+    const userRecsSection = document.getElementById('userRecommendations');
+    const userGrid = document.getElementById('userRecommendationsGrid');
+    
+    userRecsSection.style.display = 'block';
+    userGrid.innerHTML = '<div class="loading-reviews">Loading recommendations...</div>';
+    
+    fetch('/movies/api/recommendations/user/')
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          displayRecommendations(data.movies, 'userRecommendationsGrid');
+        } else {
+          userGrid.innerHTML = '<div class="no-reviews">No recommendations available</div>';
+        }
+      })
+      .catch(error => {
+        console.error('Error loading user recommendations:', error);
+        userGrid.innerHTML = '<div class="no-reviews">Error loading recommendations</div>';
+      });
+  }
+
+  function displayRecommendations(movies, gridId) {
+    const grid = document.getElementById(gridId);
+    
+    if (movies.length === 0) {
+      grid.innerHTML = '<div class="no-reviews">No recommendations available</div>';
+      return;
+    }
+    
+    const moviesHTML = movies.map(movie => `
+      <div class="recommendation-card" onclick="openRecommendedMovie(${movie.id})">
+        <img src="${movie.thumbnail}" alt="${movie.title}">
+        <h4>${movie.title}</h4>
+        <p>★ ${movie.rating.toFixed(1)} • ${movie.year}</p>
+      </div>
+    `).join('');
+    
+    grid.innerHTML = moviesHTML;
+  }
+
+  function openRecommendedMovie(movieId) {
+    // Find the movie in our movies array or fetch it
+    let movieIndex = movies.findIndex(m => m.id === movieId);
+    
+    if (movieIndex === -1) {
+      // Movie not in current array, find in allMovies
+      movieIndex = allMovies.findIndex(m => m.id === movieId);
+      if (movieIndex !== -1) {
+        // Update movies array
+        movies.length = 0;
+        movies.push(...allMovies);
+        movieIndex = movies.findIndex(m => m.id === movieId);
+      }
+    }
+    
+    if (movieIndex !== -1) {
+      closeModal();
+      setTimeout(() => openModal(movieIndex), 100);
+    }
+  }
+
+  // Enhanced Alert Functions
+  function showLoginAlert(message = 'Please login to access this feature.') {
+    document.getElementById('alertMessage').textContent = message;
+    document.getElementById('alertModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAlert() {
+    document.getElementById('alertModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+
+  function redirectToLogin() {
+    closeAlert();
+    window.location.href = "{% url 'login' %}?next={{ request.path }}";
+  }
 </script>
 
 {% endblock %}

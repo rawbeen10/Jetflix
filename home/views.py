@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Q, Count
 from .forms import CustomUserCreationForm
-from movies.models import Movie, WatchHistory
+from movies.models import Movie, WatchHistory, UserInteraction
 import logging
 
 logger = logging.getLogger(__name__)
@@ -90,9 +90,28 @@ def watchlist_view(request):
 
 
 @login_required(login_url='login')
+def profile_view(request):
+    try:
+        # Get user's watch history count
+        watch_count = WatchHistory.objects.filter(user=request.user).count()
+        
+        return render(request, 'home/profile.html', {
+            'user': request.user,
+            'watch_count': watch_count
+        })
+    except Exception as e:
+        logger.error(f"Error in profile_view: {str(e)}")
+        messages.error(request, "Unable to load profile.")
+        return redirect('home')
+
+
+@login_required(login_url='login')
 def watch_history_view(request):
     try:
-        return render(request, 'home/watch_history.html')
+        watch_history = WatchHistory.objects.filter(user=request.user).select_related('movie').order_by('-watched_at')
+        return render(request, 'home/watch_history.html', {
+            'watch_history': watch_history
+        })
     except Exception as e:
         logger.error(f"Error in watch_history_view: {str(e)}")
         messages.error(request, "Unable to load watch history.")
@@ -102,54 +121,53 @@ def watch_history_view(request):
 @login_required(login_url='login')
 def edit_profile_view(request):
     try:
+        if request.method == 'POST':
+            # Update user information
+            user = request.user
+            user.first_name = request.POST.get('first_name', '').strip()
+            user.last_name = request.POST.get('last_name', '').strip()
+            user.email = request.POST.get('email', '').strip()
+            
+            # Check if username is being changed and if it's available
+            new_username = request.POST.get('username', '').strip()
+            if new_username != user.username:
+                from django.contrib.auth.models import User
+                if User.objects.filter(username=new_username).exists():
+                    messages.error(request, "Username already exists. Please choose a different one.")
+                    return render(request, 'home/edit_profile.html')
+                user.username = new_username
+            
+            user.save()
+            messages.success(request, "Profile updated successfully!")
+            return redirect('profile')
+        
         return render(request, 'home/edit_profile.html')
     except Exception as e:
         logger.error(f"Error in edit_profile_view: {str(e)}")
-        messages.error(request, "Unable to load profile editor.")
-        return redirect('home')
+        messages.error(request, "Unable to update profile. Please try again.")
+        return render(request, 'home/edit_profile.html')
 
 
-def get_recommended_movies(user, min_watched_movies=3):
+def get_recommended_movies(user, min_interactions=2):
     """
-    Get personalized movie recommendations based on user's watch history.
-    Returns movies from genres the user has watched before.
+    Get personalized movie recommendations using collaborative filtering.
     
     Args:
         user: The user to get recommendations for
-        min_watched_movies: Minimum number of movies user must watch before getting recommendations (default: 1)
+        min_interactions: Minimum number of interactions user must have before getting recommendations
     """
     if not user.is_authenticated:
         return []
     
+    # Check if user has enough interactions
+    interaction_count = UserInteraction.objects.filter(user=user).count()
+    if interaction_count < min_interactions:
+        return None  # Indicates new user
     
-    watch_history = WatchHistory.objects.filter(user=user).select_related('movie').prefetch_related('movie__genres')[:10]
+    # Use the collaborative filtering method from Movie model
+    recommended_movies = Movie.get_recommendations_for_user(user, limit=8)
     
-    
-    watch_count = watch_history.count()
-    if watch_count < min_watched_movies:
-    
-        return None  
-    
-    
-    watched_movie_ids = [history.movie.id for history in watch_history]
-    watched_genres = set()
-    
-    for history in watch_history:
-        for genre in history.movie.genres.all():
-            watched_genres.add(genre.id)
-    
-    if not watched_genres:
-        return []
-    
-    
-    recommended_movies = Movie.objects.filter(
-        is_published=True,
-        genres__id__in=watched_genres
-    ).exclude(
-        id__in=watched_movie_ids
-    ).select_related('language').prefetch_related('genres').distinct().order_by('-views', '-review_stars')[:8]
-    
-    return recommended_movies
+    return list(recommended_movies)
 
 
 def home_page(request):
@@ -166,7 +184,7 @@ def home_page(request):
         
         if request.user.is_authenticated:
             
-            recommended_movies = get_recommended_movies(request.user, min_watched_movies=1)
+            recommended_movies = get_recommended_movies(request.user, min_interactions=1)
             if recommended_movies is None:
                 
                 is_new_user = True

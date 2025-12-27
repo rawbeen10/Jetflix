@@ -1,0 +1,396 @@
+{% extends 'home/base.html' %}
+{% load static %}
+
+{% block title %}Search - JetFlix{% endblock %}
+
+{% block content %}
+<style>
+  .search-page {
+    padding: 2rem 3rem;
+    min-height: calc(100vh - 140px);
+  }
+
+  .search-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .search-header h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #fff;
+  }
+
+  .search-box {
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 1rem 3rem 1rem 1.5rem;
+    font-size: 1.2rem;
+    background: #333;
+    border: 2px solid #555;
+    border-radius: 50px;
+    color: #fff;
+    outline: none;
+    transition: all 0.3s;
+  }
+
+  .search-input:focus {
+    border-color: #e50914;
+    background: #404040;
+  }
+
+  .search-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #e50914;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+  }
+
+  .search-btn:hover {
+    background: #f40612;
+  }
+
+  .search-results {
+    margin-top: 3rem;
+  }
+
+  .results-header {
+    margin-bottom: 2rem;
+  }
+
+  .results-count {
+    color: #b3b3b3;
+    font-size: 1.1rem;
+  }
+
+  .movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .movie-card {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #1a1a1a;
+    aspect-ratio: 2/3;
+  }
+
+  .movie-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  }
+
+  .movie-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .movie-card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
+    padding: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .movie-card:hover .movie-card-overlay {
+    opacity: 1;
+  }
+
+  .movie-card-overlay h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: #fff;
+  }
+
+  .movie-card-overlay p {
+    font-size: 0.8rem;
+    color: #b3b3b3;
+  }
+
+  .empty-search {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #666;
+  }
+
+  .empty-search svg {
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 768px) {
+    .search-page {
+      padding: 1rem;
+    }
+
+    .search-header h1 {
+      font-size: 2rem;
+    }
+
+    .movies-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+  }
+</style>
+
+<div class="search-page">
+  <div class="search-header">
+    <h1>Search Movies</h1>
+    <div class="search-box">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search for movies...">
+      <button class="search-btn" onclick="performSearch()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="search-results" id="searchResults" style="display: none;">
+    <div class="results-header">
+      <div class="results-count" id="resultsCount">0 movies found</div>
+    </div>
+    <div class="movies-grid" id="moviesGrid"></div>
+  </div>
+
+  <div class="empty-search" id="emptySearch">
+    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.5">
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.35-4.35"></path>
+    </svg>
+    <h3>Start searching for movies</h3>
+    <p>Enter a movie title, genre, or actor name to find what you're looking for</p>
+  </div>
+</div>
+
+<script>
+  let searchTimeout;
+  let searchResults = [];
+
+  document.getElementById('searchInput').addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+    const query = e.target.value.trim();
+    
+    if (query.length > 2) {
+      searchTimeout = setTimeout(() => performSearch(), 300);
+    } else if (query.length === 0) {
+      showEmptyState();
+    }
+  });
+
+  document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      performSearch();
+    }
+  });
+
+  function performSearch() {
+    const query = document.getElementById('searchInput').value.trim();
+    
+    if (query.length < 1) {
+      showEmptyState();
+      return;
+    }
+
+    fetch(`/api/search/?q=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          searchResults = data.movies;
+          displayResults(data.movies, query);
+        } else {
+          displayResults([], query);
+        }
+      })
+      .catch(error => {
+        console.error('Search error:', error);
+        displayResults([], query);
+      });
+  }
+
+  function displayResults(movies, query) {
+    const resultsSection = document.getElementById('searchResults');
+    const emptySection = document.getElementById('emptySearch');
+    const resultsCount = document.getElementById('resultsCount');
+    const moviesGrid = document.getElementById('moviesGrid');
+
+    emptySection.style.display = 'none';
+    resultsSection.style.display = 'block';
+
+    resultsCount.textContent = `${movies.length} movie${movies.length !== 1 ? 's' : ''} found for "${query}"`;
+
+    if (movies.length === 0) {
+      moviesGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #666;">
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <h3>No movies found</h3>
+          <p>Try searching with different keywords</p>
+        </div>
+      `;
+    } else {
+      moviesGrid.innerHTML = movies.map((movie, index) => `
+        <div class="movie-card" onclick="openSearchModal(${index})">
+          <img src="${movie.thumbnail}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Image'">
+          <div class="movie-card-overlay">
+            <h3>${movie.title}</h3>
+            <p>${movie.year} • ${movie.language}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function showEmptyState() {
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('emptySearch').style.display = 'block';
+  }
+
+  function openSearchModal(index) {
+    const movie = searchResults[index];
+    
+    // Create modal HTML
+    const modalHTML = `
+      <div class="modal active" id="searchModal">
+        <div class="modal-content">
+          <button class="modal-close" onclick="closeSearchModal()">&times;</button>
+          
+          <div class="modal-hero" style="background-image: linear-gradient(to top, #181818 0%, transparent 100%), url('${movie.thumbnail}');">
+            <div class="modal-hero-overlay">
+              <h1 class="modal-title">${movie.title}</h1>
+              <div class="modal-meta">
+                <span class="modal-rating">★ ${movie.rating.toFixed(1)}</span>
+                <span>${movie.year}</span>
+                <span>${movie.length || 'Unknown'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-body">
+            <div class="modal-actions">
+              <button class="btn btn-primary" onclick="playSearchMovie(${movie.id})">
+                <span>▶</span> Play
+              </button>
+              <button class="btn btn-secondary" onclick="addSearchToWatchlist(${movie.id})">
+                <span>+</span> My List
+              </button>
+            </div>
+
+            <p class="modal-description">${movie.description || 'No description available.'}</p>
+
+            <div class="modal-info">
+              <div class="modal-info-row">
+                <span class="modal-info-label">Cast:</span>
+                <span class="modal-info-value">${movie.cast || 'Unknown'}</span>
+              </div>
+              <div class="modal-info-row">
+                <span class="modal-info-label">Genres:</span>
+                <span class="modal-info-value">${movie.genres || 'Unknown'}</span>
+              </div>
+              <div class="modal-info-row">
+                <span class="modal-info-label">Language:</span>
+                <span class="modal-info-value">${movie.language || 'Unknown'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSearchModal() {
+    const modal = document.getElementById('searchModal');
+    if (modal) {
+      modal.remove();
+      document.body.style.overflow = 'auto';
+    }
+  }
+
+  function playSearchMovie(movieId) {
+    const movie = searchResults.find(m => m.id === movieId);
+    if (movie && movie.video) {
+      if (typeof openJetflixPlayer === 'function') {
+        openJetflixPlayer(movie.video, movie.title);
+        closeSearchModal();
+      } else {
+        // Fallback - open in new tab or basic player
+        window.open(movie.video, '_blank');
+        closeSearchModal();
+      }
+    } else {
+      alert('Video not available');
+    }
+  }
+
+  function addSearchToWatchlist(movieId) {
+    fetch('/movies/add_to_watchlist/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ movie_id: movieId })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert(data.action === 'added' ? 'Added to watchlist!' : 'Already in watchlist!');
+      }
+    })
+    .catch(error => console.error('Error:', error));
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // Close modal with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeSearchModal();
+    }
+  });
+</script>
+{% endblock %}

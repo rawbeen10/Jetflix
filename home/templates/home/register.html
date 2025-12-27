@@ -6,15 +6,251 @@
 {% block main_class %}register-page-content{% endblock %}
 
 {% block content %}
+<style>
+  .register-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+    padding: 20px;
+  }
+  
+  .register-container {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+  
+  .register-container h1 {
+    text-align: center;
+    color: #e50914;
+    font-size: 32px;
+    margin-bottom: 30px;
+    font-weight: 700;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+    position: relative;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #e5e5e5;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+  
+  .form-group input:focus {
+    outline: none;
+    border-color: #e50914;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.1);
+  }
+  
+  .form-group input.error {
+    border-color: #ff4444;
+    background: rgba(255, 68, 68, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.1);
+  }
+  
+  .password-container {
+    position: relative;
+  }
+  
+  .password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 16px;
+  }
+  
+  .password-toggle:hover {
+    color: #e50914;
+  }
+  
+  .error-message {
+    color: #ff4444;
+    font-size: 12px;
+    margin-top: 5px;
+    display: none;
+    background: rgba(255, 68, 68, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 3px solid #ff4444;
+  }
+  
+  .error-message.show {
+    display: block;
+  }
+  
+  .register-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #e50914, #ff1744);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+  }
+  
+  .register-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(229, 9, 20, 0.4);
+  }
+  
+  .login-link {
+    text-align: center;
+    margin-top: 20px;
+    color: #b3b3b3;
+  }
+  
+  .login-link a {
+    color: #e50914;
+    text-decoration: none;
+  }
+</style>
+
 <div class="register-wrapper">
   <div class="register-container">
     <h1>Create Account</h1>
-    <form method="post">
+    <form method="post" id="registerForm">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit">Register</button>
+      
+      <div class="form-group">
+        <label for="id_username">Username</label>
+        <input type="text" name="username" id="id_username" placeholder="Choose a username" required>
+        <div class="error-message" id="usernameError"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="id_email">Email</label>
+        <input type="email" name="email" id="id_email" placeholder="Enter your email" required>
+        <div class="error-message" id="emailError"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="id_password1">Password</label>
+        <div class="password-container">
+          <input type="password" name="password1" id="id_password1" placeholder="Create a password" required>
+          <button type="button" class="password-toggle" onclick="togglePassword('id_password1')">
+            👁️
+          </button>
+        </div>
+        <div class="error-message" id="password1Error"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="id_password2">Confirm Password</label>
+        <div class="password-container">
+          <input type="password" name="password2" id="id_password2" placeholder="Confirm your password" required>
+          <button type="button" class="password-toggle" onclick="togglePassword('id_password2')">
+            👁️
+          </button>
+        </div>
+        <div class="error-message" id="password2Error"></div>
+      </div>
+      
+      <button type="submit" class="register-btn">Create Account</button>
     </form>
     <p class="login-link">Already have an account? <a href="{% url 'login' %}">Login here</a></p>
   </div>
 </div>
+
+<script>
+  function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const button = input.nextElementSibling;
+    
+    if (input.type === 'password') {
+      input.type = 'text';
+      button.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      button.textContent = '👁️';
+    }
+  }
+  
+  function showError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const error = document.getElementById(fieldId + 'Error');
+    
+    field.classList.add('error');
+    error.textContent = message;
+    error.classList.add('show');
+  }
+  
+  function clearError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const error = document.getElementById(fieldId + 'Error');
+    
+    field.classList.remove('error');
+    error.classList.remove('show');
+  }
+  
+  // Validation on blur (only show errors when user leaves field)
+  document.getElementById('id_username').addEventListener('blur', function() {
+    const username = this.value;
+    if (username && (username.length < 3 || !/^[a-zA-Z0-9_]+$/.test(username))) {
+      showError('id_username', 'Username must be at least 3 characters and contain only letters, numbers, and underscores');
+    } else {
+      clearError('id_username');
+    }
+  });
+  
+  document.getElementById('id_email').addEventListener('blur', function() {
+    const email = this.value;
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showError('id_email', 'Please enter a valid email address');
+    } else {
+      clearError('id_email');
+    }
+  });
+  
+  document.getElementById('id_password1').addEventListener('blur', function() {
+    const password = this.value;
+    if (password && (password.length < 8 || !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password))) {
+      showError('id_password1', 'Password must be at least 8 characters with uppercase, lowercase, and number');
+    } else {
+      clearError('id_password1');
+    }
+  });
+  
+  document.getElementById('id_password2').addEventListener('blur', function() {
+    const password1 = document.getElementById('id_password1').value;
+    const password2 = this.value;
+    if (password2 && password1 !== password2) {
+      showError('id_password2', 'Passwords do not match');
+    } else {
+      clearError('id_password2');
+    }
+  });
+</script>
 {% endblock %}
