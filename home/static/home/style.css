@@ -113,6 +113,11 @@ body {
   position: relative;
 }
 
+/* Hide profile dropdown for non-authenticated users */
+body:not(.authenticated) .profile-dropdown {
+  display: none !important;
+}
+
 .profile-btn {
   display: flex;
   align-items: center;

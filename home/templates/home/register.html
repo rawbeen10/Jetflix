@@ -144,16 +144,40 @@
     <form method="post" id="registerForm">
       {% csrf_token %}
       
+      {% if form.non_field_errors %}
+        <div class="error-message show">
+          {% for error in form.non_field_errors %}
+            {{ error }}
+          {% endfor %}
+        </div>
+      {% endif %}
+      
       <div class="form-group">
         <label for="id_username">Username</label>
-        <input type="text" name="username" id="id_username" placeholder="Choose a username" required>
-        <div class="error-message" id="usernameError"></div>
+        <input type="text" name="username" id="id_username" placeholder="Choose a username" value="{{ form.username.value|default:'' }}" required>
+        {% if form.username.errors %}
+          <div class="error-message show">
+            {% for error in form.username.errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="error-message" id="usernameError"></div>
+        {% endif %}
       </div>
       
       <div class="form-group">
         <label for="id_email">Email</label>
-        <input type="email" name="email" id="id_email" placeholder="Enter your email" required>
-        <div class="error-message" id="emailError"></div>
+        <input type="email" name="email" id="id_email" placeholder="Enter your email" value="{{ form.email.value|default:'' }}" required>
+        {% if form.email.errors %}
+          <div class="error-message show">
+            {% for error in form.email.errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="error-message" id="emailError"></div>
+        {% endif %}
       </div>
       
       <div class="form-group">
@@ -164,7 +188,15 @@
             👁️
           </button>
         </div>
-        <div class="error-message" id="password1Error"></div>
+        {% if form.password1.errors %}
+          <div class="error-message show">
+            {% for error in form.password1.errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="error-message" id="password1Error"></div>
+        {% endif %}
       </div>
       
       <div class="form-group">
@@ -175,7 +207,15 @@
             👁️
           </button>
         </div>
-        <div class="error-message" id="password2Error"></div>
+        {% if form.password2.errors %}
+          <div class="error-message show">
+            {% for error in form.password2.errors %}
+              {{ error }}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="error-message" id="password2Error"></div>
+        {% endif %}
       </div>
       
       <button type="submit" class="register-btn">Create Account</button>

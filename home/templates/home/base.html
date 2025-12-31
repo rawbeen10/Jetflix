@@ -348,6 +348,7 @@
 </head>
 <body>
   <!-- Search Overlay -->
+  {% if user.is_authenticated %}
   <div class="search-overlay" id="searchOverlay" onclick="closeSearchSidebar()"></div>
 
   <!-- Search Sidebar -->
@@ -410,6 +411,7 @@
       </div>
     </div>
   </div>
+  {% endif %}
 
   <!-- Navbar -->
   <nav class="navbar">
@@ -535,12 +537,15 @@
         lastScroll = currentScroll;
       });
 
+      {% if user.is_authenticated %}
       // Initialize search sidebar if on homepage
       if (typeof initSearchSidebar === 'function') {
         initSearchSidebar();
       }
+      {% endif %}
     });
 
+    {% if user.is_authenticated %}
     // Search Sidebar Variables
     let sidebarMovies = [];
     let sidebarFilteredMovies = [];
@@ -787,6 +792,7 @@
         closeSearchSidebar();
       }
     });
+    {% endif %}
 
     window.allMoviesData = [
     {% for movie in all_movies %}
@@ -815,6 +821,8 @@
   <script>
     // Ensure profile dropdown works on all pages
     document.addEventListener('DOMContentLoaded', function() {
+      // Only initialize profile dropdown for authenticated users
+      {% if user.is_authenticated %}
       // Small delay to ensure all other scripts have loaded
       setTimeout(function() {
         const profileBtn = document.querySelector('.profile-btn');
@@ -839,6 +847,7 @@
           });
         }
       }, 100);
+      {% endif %}
     });
   </script>
   
