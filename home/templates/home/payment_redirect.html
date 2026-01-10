@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting to eSewa - Jetflix</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .redirect-container {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.75);
+            border-radius: 4px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            color: #e50914;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+        }
+
+        .redirect-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .redirect-subtitle {
+            color: #b3b3b3;
+            margin-bottom: 2rem;
+        }
+
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #e50914;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .manual-submit {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .manual-submit p {
+            color: #b3b3b3;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .esewa-btn {
+            background: #60bb46;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .esewa-btn:hover {
+            background: #4a9936;
+        }
+
+        .back-link {
+            margin-top: 1rem;
+        }
+
+        .back-link a {
+            color: #e50914;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: rgba(232, 124, 3, 0.2);
+            color: #e87c03;
+            border: 1px solid rgba(232, 124, 3, 0.3);
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .test-token {
+            background: rgba(70, 211, 105, 0.2);
+            color: #46d369;
+            border: 1px solid rgba(70, 211, 105, 0.3);
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="redirect-container">
+        <div class="logo">JETFLIX</div>
+        
+        <div class="test-token" style="display: none;">
+            <strong>Test Token:</strong> Use 123456 when prompted for verification code
+        </div>
+        
+        <div class="error-message" id="errorMessage">
+            eSewa service is temporarily unavailable. Please try the demo payment option or try again later.
+        </div>
+        
+        <h2 class="redirect-title">Redirecting to eSewa</h2>
+        <p class="redirect-subtitle">Please wait while we redirect you to eSewa for secure payment...</p>
+        
+        <div class="loader" id="loader"></div>
+        
+        <div class="back-link">
+            <a href="/payment/">← Back to payment options</a>
+        </div>
+    </div>
+    
+    <form id="esewaForm" action="{{ esewa_config.esewa_url }}" method="POST" style="display: none;">
+        <input type="hidden" name="amount" value="{{ esewa_config.amount }}">
+        <input type="hidden" name="tax_amount" value="{{ esewa_config.tax_amount }}">
+        <input type="hidden" name="total_amount" value="{{ esewa_config.total_amount }}">
+        <input type="hidden" name="transaction_uuid" value="{{ esewa_config.transaction_uuid }}">
+        <input type="hidden" name="product_code" value="{{ esewa_config.product_code }}">
+        <input type="hidden" name="product_service_charge" value="{{ esewa_config.product_service_charge }}">
+        <input type="hidden" name="product_delivery_charge" value="{{ esewa_config.product_delivery_charge }}">
+        <input type="hidden" name="success_url" value="{{ esewa_config.success_url }}">
+        <input type="hidden" name="failure_url" value="{{ esewa_config.failure_url }}">
+        <input type="hidden" name="signed_field_names" value="{{ esewa_config.signed_field_names }}">
+        <input type="hidden" name="signature" value="{{ esewa_config.signature }}">
+    </form>
+    
+    <script>
+        let redirectAttempted = false;
+        let timeoutId;
+        
+        function attemptRedirect() {
+            if (redirectAttempted) return;
+            redirectAttempted = true;
+            
+            try {
+                document.getElementById('esewaForm').submit();
+            } catch (error) {
+                console.error('Redirect failed:', error);
+                showError();
+            }
+        }
+        
+        function showError() {
+            document.getElementById('errorMessage').classList.add('show');
+            document.getElementById('loader').style.display = 'none';
+            document.querySelector('.redirect-title').textContent = 'Service Unavailable';
+            document.querySelector('.redirect-subtitle').textContent = 'eSewa service is currently unavailable. Please use the demo payment option.';
+        }
+        
+        // Auto-submit after 3 seconds
+        timeoutId = setTimeout(attemptRedirect, 3000);
+    </script>
+</body>
+</html>

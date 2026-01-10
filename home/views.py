@@ -5,9 +5,49 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Q, Count
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 from .forms import CustomUserCreationForm
+from .models import Payment
 from movies.models import Movie, WatchHistory, UserInteraction
 import logging
+import uuid
+import hashlib
+import hmac
+import base64
+import json
+import requests
+
+# eSewa Configuration
+ESEWA_MERCHANT_CODE = 'EPAYTEST'
+ESEWA_SECRET_KEY = '8gBm/:&EnhH.1/q'
+ESEWA_SANDBOX_URL = 'https://rc-epay.esewa.com.np/api/epay/main/v2/form'
+ESEWA_STATUS_URL = 'https://rc.esewa.com.np/api/epay/transaction/status/'
+
+def generate_esewa_signature(total_amount, transaction_uuid, product_code):
+    """Generate HMAC SHA256 signature for eSewa"""
+    message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
+    signature = hmac.new(
+        ESEWA_SECRET_KEY.encode('utf-8'),
+        message.encode('utf-8'),
+        hashlib.sha256
+    ).digest()
+    return base64.b64encode(signature).decode('utf-8')
+
+def check_esewa_payment_status(transaction_uuid, total_amount):
+    """Check payment status with eSewa API"""
+    try:
+        url = f"{ESEWA_STATUS_URL}?product_code={ESEWA_MERCHANT_CODE}&total_amount={total_amount}&transaction_uuid={transaction_uuid}"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('status'), data.get('ref_id')
+        else:
+            return None, None
+    except Exception:
+        return None, None
 
 logger = logging.getLogger(__name__)
 
@@ -18,58 +58,80 @@ def register_view(request):
         if request.method == 'POST':
             form = CustomUserCreationForm(request.POST)
             if form.is_valid():
-                form.save()
-                messages.success(request, "Account created successfully! You can now log in.")
-                return redirect('login')
+                user = form.save()
+                login(request, user)  # Auto-login after registration
+                messages.success(request, "Account created successfully! Please complete payment to access movies.")
+                return redirect('payment')
             else:
-                messages.error(request, "Please correct the errors below.")
+                # Return to login page with signup form active and errors
+                return render(request, 'home/login.html', {
+                    'show_signup': True,
+                    'signup_errors': form.errors
+                })
         else:
             form = CustomUserCreationForm()
-        return render(request, 'home/register.html', {'form': form})
+        return render(request, 'home/login.html', {'show_signup': True})
     except Exception as e:
         logger.error(f"Error in register_view: {str(e)}")
         messages.error(request, "An error occurred during registration. Please try again.")
-        return render(request, 'home/register.html', {'form': CustomUserCreationForm()})
+        return render(request, 'home/login.html', {'show_signup': True})
 
 
 # Login
 def login_view(request):
+    # Redirect authenticated users with payment to dashboard
+    if request.user.is_authenticated:
+        has_payment = Payment.objects.filter(
+            user=request.user, 
+            status='completed'
+        ).exists()
+        
+        if has_payment:
+            return redirect('home')
+        else:
+            return redirect('payment')
+    
     try:
         if request.method == 'POST':
-            form = AuthenticationForm(request, data=request.POST)
-            if form.is_valid():
-                user = form.get_user()
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
                 login(request, user)
                 
-                # Check if there's a 'next' parameter (where to redirect after login)
-                next_url = request.GET.get('next') or request.POST.get('next')
-                if next_url:
-                    return redirect(next_url)
+                # Check if user has active payment
+                has_payment = Payment.objects.filter(
+                    user=user, 
+                    status='completed'
+                ).exists()
                 
-                messages.success(request, f"Welcome back, {user.username}!")
-                return redirect('home')
+                if has_payment:
+                    messages.success(request, f"Welcome back, {user.username}!")
+                    return redirect('home')
+                else:
+                    return redirect('payment')
             else:
-                messages.error(request, "Invalid username or password.")
-        else:
-            form = AuthenticationForm()
-        return render(request, 'home/login.html', {'form': form})
+                messages.error(request, "Invalid email or password.")
+        
+        return render(request, 'home/login.html')
     except Exception as e:
         logger.error(f"Error in login_view: {str(e)}")
         messages.error(request, "An error occurred during login. Please try again.")
-        return render(request, 'home/login.html', {'form': AuthenticationForm()})
+        return render(request, 'home/login.html')
 
 
 def logout_view(request):
     try:
         logout(request)
         messages.info(request, "You have been logged out successfully.")
-        return redirect('home')
+        return redirect('/')  # Redirect to login page
     except Exception as e:
         logger.error(f"Error in logout_view: {str(e)}")
-        return redirect('home')
+        return redirect('/')
 
 
-@login_required(login_url='login')
+@login_required(login_url='/')
 def search_view(request):
     try:
         return render(request, 'home/search.html')
@@ -79,7 +141,7 @@ def search_view(request):
         return redirect('home')
 
 
-@login_required(login_url='login')
+@login_required(login_url='/')
 def watchlist_view(request):
     try:
         return render(request, 'home/watchlist.html')
@@ -89,7 +151,7 @@ def watchlist_view(request):
         return redirect('home')
 
 
-@login_required(login_url='login')
+@login_required(login_url='/')
 def profile_view(request):
     try:
         # Get user's watch history count
@@ -105,7 +167,7 @@ def profile_view(request):
         return redirect('home')
 
 
-@login_required(login_url='login')
+@login_required(login_url='/')
 def watch_history_view(request):
     try:
         watch_history = WatchHistory.objects.filter(user=request.user).select_related('movie').order_by('-watched_at')
@@ -118,7 +180,7 @@ def watch_history_view(request):
         return redirect('home')
 
 
-@login_required(login_url='login')
+@login_required(login_url='/')
 def edit_profile_view(request):
     try:
         if request.method == 'POST':
@@ -231,7 +293,7 @@ def homepage_view(request):
 
 
 
-@login_required(login_url='login')
+@login_required(login_url='/')
 def search_movies_api(request):
     """
     Optional API endpoint for searching movies via AJAX.
@@ -293,3 +355,130 @@ def search_movies_api(request):
             'status': 'error',
             'message': 'An error occurred while searching movies.'
         }, status=500)
+
+
+@login_required(login_url='/')
+def verify_payment_status(request, transaction_uuid):
+    """Manual payment verification endpoint"""
+    try:
+        payment = Payment.objects.get(transaction_id=transaction_uuid, user=request.user)
+        
+        if payment.status == 'completed':
+            return JsonResponse({'status': 'success', 'message': 'Payment already completed'})
+        
+        # Check with eSewa
+        esewa_status, ref_id = check_esewa_payment_status(transaction_uuid, str(payment.amount))
+        
+        if esewa_status == 'COMPLETE':
+            payment.status = 'completed'
+            payment.esewa_ref_id = ref_id
+            payment.save()
+            return JsonResponse({'status': 'success', 'message': 'Payment verified and completed'})
+        elif esewa_status in ['PENDING', 'AMBIGUOUS']:
+            return JsonResponse({'status': 'pending', 'message': 'Payment is still processing'})
+        else:
+            return JsonResponse({'status': 'failed', 'message': 'Payment verification failed'})
+            
+    except Payment.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Payment not found'})
+    except Exception as e:
+        logger.error(f"Payment verification error: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Verification failed'})
+
+
+@login_required(login_url='/')
+def payment_view(request):
+    # Check if user already has active payment
+    active_payment = Payment.objects.filter(
+        user=request.user,
+        status='completed'
+    ).first()
+    
+    if active_payment:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        payment_method = request.POST.get('payment_method')
+        
+        if payment_method == 'esewa':
+            # Create payment record for eSewa
+            transaction_uuid = str(uuid.uuid4())
+            payment = Payment.objects.create(
+                user=request.user,
+                transaction_id=transaction_uuid,
+                amount=500.00
+            )
+            
+            # Generate signature
+            signature = generate_esewa_signature('500', transaction_uuid, ESEWA_MERCHANT_CODE)
+            
+            # eSewa form data
+            esewa_config = {
+                'amount': '500',
+                'tax_amount': '0',
+                'total_amount': '500',
+                'transaction_uuid': transaction_uuid,
+                'product_code': ESEWA_MERCHANT_CODE,
+                'product_service_charge': '0',
+                'product_delivery_charge': '0',
+                'success_url': request.build_absolute_uri('/payment/success/'),
+                'failure_url': request.build_absolute_uri('/payment/failure/'),
+                'signed_field_names': 'total_amount,transaction_uuid,product_code',
+                'signature': signature,
+                'esewa_url': ESEWA_SANDBOX_URL
+            }
+            
+            return render(request, 'home/payment_redirect.html', {
+                'payment': payment,
+                'esewa_config': esewa_config
+            })
+    
+    return render(request, 'home/payment.html')
+
+
+def payment_success_view(request):
+    # Get response data from eSewa
+    data = request.GET.get('data')
+    
+    if data:
+        try:
+            # Decode base64 response
+            decoded_data = base64.b64decode(data).decode('utf-8')
+            response_data = json.loads(decoded_data)
+            
+            transaction_uuid = response_data.get('transaction_uuid')
+            status = response_data.get('status')
+            
+            if transaction_uuid and status == 'COMPLETE':
+                payment = Payment.objects.get(transaction_id=transaction_uuid)
+                payment.status = 'completed'
+                payment.esewa_ref_id = response_data.get('transaction_code', '')
+                payment.save()
+                
+                messages.success(request, 'Payment successful! You now have access to all movies.')
+                return redirect('/')  # Redirect to login page
+        except (Payment.DoesNotExist, json.JSONDecodeError, Exception) as e:
+            logger.error(f"Payment verification failed: {e}")
+            messages.error(request, 'Payment verification failed.')
+    
+    # Fallback for old format
+    transaction_id = request.GET.get('oid')
+    if transaction_id:
+        try:
+            payment = Payment.objects.get(transaction_id=transaction_id)
+            payment.status = 'completed'
+            payment.esewa_ref_id = request.GET.get('refId', f'esewa_ref_{transaction_id[:8]}')
+            payment.save()
+            
+            messages.success(request, 'Payment successful! You now have access to all movies.')
+            return redirect('/')  # Redirect to login page
+        except Payment.DoesNotExist:
+            messages.error(request, 'Payment verification failed.')
+    
+    # No success message here - only redirect if no valid payment found
+    return redirect('payment')
+
+
+def payment_failure_view(request):
+    messages.error(request, 'Payment failed. Please try again.')
+    return redirect('payment')

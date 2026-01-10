@@ -468,7 +468,7 @@
         {% else %}
           <!-- Links for logged out users -->
           <div class="nav-links">
-            <a href="{% url 'login' %}" class="nav-link-btn">Login</a>
+            <a href="/" class="nav-link-btn">Login</a>
           </div>
         {% endif %}
       </div>
@@ -817,36 +817,31 @@
   
   {% block extra_js %}{% endblock %}
   
-  <!-- Profile dropdown must be initialized after all other scripts -->
+  <!-- Profile dropdown initialization -->
   <script>
-    // Ensure profile dropdown works on all pages
     document.addEventListener('DOMContentLoaded', function() {
-      // Only initialize profile dropdown for authenticated users
       {% if user.is_authenticated %}
-      // Small delay to ensure all other scripts have loaded
-      setTimeout(function() {
-        const profileBtn = document.querySelector('.profile-btn');
-        const dropdownMenu = document.querySelector('.dropdown-menu');
-        
-        if (profileBtn && dropdownMenu) {
-          // Remove any existing listeners
-          profileBtn.replaceWith(profileBtn.cloneNode(true));
-          const newProfileBtn = document.querySelector('.profile-btn');
-          
-          newProfileBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            dropdownMenu.classList.toggle('show');
-          });
+      const profileBtn = document.querySelector('.profile-btn');
+      const dropdownMenu = document.querySelector('.profile-dropdown .dropdown-menu');
+      
+      if (profileBtn && dropdownMenu) {
+        profileBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropdownMenu.classList.toggle('show');
+        });
 
-          // Close dropdown when clicking outside
-          document.addEventListener('click', function(e) {
-            if (!newProfileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-              dropdownMenu.classList.remove('show');
-            }
-          });
-        }
-      }, 100);
+        document.addEventListener('click', function(e) {
+          if (!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+            dropdownMenu.classList.remove('show');
+          }
+        });
+        
+        // Debug log
+        console.log('Profile dropdown initialized');
+      } else {
+        console.log('Profile elements not found:', { profileBtn, dropdownMenu });
+      }
       {% endif %}
     });
   </script>

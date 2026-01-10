@@ -1,73 +1,527 @@
-{% extends 'home/base.html' %}
-{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Jetflix</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Login - JetFlix{% endblock %}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
 
-{% block main_class %}login-page-content{% endblock %}
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+        }
 
-{% block content %}
-<div class="login-wrapper">
-  <div class="login-container">
-    <h1>Log in</h1>
-    <form method="post">
-      {% csrf_token %}
-      
-      {% if form.non_field_errors %}
-        <div class="error-message show">
-          {% for error in form.non_field_errors %}
-            {{ error }}
-          {% endfor %}
+        .login-card {
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 48px 40px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #e50914;
+        }
+
+        .form-input::placeholder {
+            color: #666;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+        }
+
+        .password-toggle:hover {
+            color: #fff;
+        }
+
+        .form-error {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .form-error.show {
+            display: block;
+        }
+
+        .primary-btn {
+            width: 100%;
+            padding: 16px;
+            background: #e50914;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background-color 0.2s ease;
+        }
+
+        .primary-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .primary-btn:not(:disabled):hover {
+            background: #cc0812;
+        }
+
+        .secondary-action {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .secondary-action a {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .secondary-action a:hover {
+            text-decoration: underline;
+        }
+
+        .payment-hint {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #555;
+            background: linear-gradient(transparent, #0a0a0a);
+        }
+
+        .footer-links {
+            margin-bottom: 8px;
+        }
+
+        .footer-links a {
+            color: #666;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+
+        .footer-links a:hover {
+            color: #888;
+        }
+
+        .footer-brand {
+            margin-bottom: 4px;
+        }
+
+        /* Sign up form (hidden by default) */
+        .signup-form {
+            display: none;
+        }
+
+        .signup-form.active {
+            display: block;
+        }
+
+        .login-form.active {
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 32px 24px;
+            }
+            
+            .page-footer {
+                position: relative;
+                margin-top: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Login Form -->
+            <div class="login-form{% if not show_signup %} active{% endif %}">
+                <h1 class="card-title">Sign in to continue</h1>
+                <p class="card-subtitle">Watch premium movies after secure payment.</p>
+
+                <form id="loginForm" method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <input 
+                            type="email" 
+                            name="username" 
+                            class="form-input" 
+                            placeholder="Email"
+                            id="loginEmail"
+                            required
+                        >
+                        <div class="form-error" id="emailError">Enter a valid email address.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="password-wrapper">
+                            <input 
+                                type="password" 
+                                name="password" 
+                                class="form-input" 
+                                placeholder="Password"
+                                id="loginPassword"
+                                required
+                            >
+                            <button type="button" class="password-toggle" id="passwordToggle">SHOW</button>
+                        </div>
+                        <div class="form-error" id="passwordError">Password must be at least 8 characters.</div>
+                    </div>
+
+                    <button type="submit" class="primary-btn" id="loginBtn" disabled>Sign In</button>
+                </form>
+
+                <div class="secondary-action">
+                    New here? <a href="#" id="showSignup">Create an account</a>
+                </div>
+
+                <div class="payment-hint">
+                    A one-time secure payment is required to unlock streaming.
+                </div>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div class="signup-form{% if show_signup %} active{% endif %}">
+                <h1 class="card-title">Create your account</h1>
+                <p class="card-subtitle">Join and start watching premium content.</p>
+
+                {% if signup_errors %}
+                    <div style="margin-bottom: 20px;">
+                        {% for field, errors in signup_errors.items %}
+                            {% for error in errors %}
+                                <div class="form-error show">{{ error }}</div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form id="signupForm" method="post" action="{% url 'register' %}">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <input 
+                            type="email" 
+                            name="email" 
+                            class="form-input" 
+                            placeholder="Email"
+                            id="signupEmail"
+                            required
+                        >
+                        <div class="form-error" id="signupEmailError">Enter a valid email address.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <input 
+                            type="text" 
+                            name="username" 
+                            class="form-input" 
+                            placeholder="Username"
+                            id="signupUsername"
+                            required
+                        >
+                        <div class="form-error" id="usernameError">Username is required.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="password-wrapper">
+                            <input 
+                                type="password" 
+                                name="password1" 
+                                class="form-input" 
+                                placeholder="Password"
+                                id="signupPassword"
+                                required
+                            >
+                            <button type="button" class="password-toggle" id="signupPasswordToggle">SHOW</button>
+                        </div>
+                        <div class="form-error" id="signupPasswordError">Password must be at least 8 characters.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <input 
+                            type="password" 
+                            name="password2" 
+                            class="form-input" 
+                            placeholder="Confirm Password"
+                            id="confirmPassword"
+                            required
+                        >
+                        <div class="form-error" id="confirmPasswordError">Passwords do not match.</div>
+                    </div>
+
+                    <button type="submit" class="primary-btn" id="signupBtn" disabled>Create Account</button>
+                </form>
+
+                <div class="secondary-action">
+                    Already have an account? <a href="#" id="showLogin">Sign in</a>
+                </div>
+
+                <div class="payment-hint">
+                    You'll be redirected to secure payment after creating your account.
+                </div>
+            </div>
         </div>
-      {% endif %}
-      
-      <div class="form-group">
-        <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
-        {{ form.username }}
-        {% if form.username.errors %}
-          <div class="error-message show">
-            {% for error in form.username.errors %}
-              {{ error }}
-            {% endfor %}
-          </div>
-        {% endif %}
-      </div>
-      
-      <div class="form-group">
-        <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
-        {{ form.password }}
-        {% if form.password.errors %}
-          <div class="error-message show">
-            {% for error in form.password.errors %}
-              {{ error }}
-            {% endfor %}
-          </div>
-        {% endif %}
-      </div>
-      
-      <button type="submit">Login</button>
-    </form>
-    <p class="register-link">Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
-  </div>
-</div>
+    </div>
 
-<style>
-  .form-group {
-    margin-bottom: 20px;
-  }
-  
-  .error-message {
-    color: #ff4444;
-    font-size: 12px;
-    margin-top: 5px;
-    display: none;
-    background: rgba(255, 68, 68, 0.1);
-    padding: 8px 12px;
-    border-radius: 6px;
-    border-left: 3px solid #ff4444;
-  }
-  
-  .error-message.show {
-    display: block;
-  }
-</style>
-{% endblock %}
+    <footer class="page-footer">
+        <div class="footer-links">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Contact</a>
+        </div>
+        <div class="footer-brand">© 2026 Jetflix</div>
+        <div>Secure payments via eSewa</div>
+    </footer>
+
+    <script>
+        // Form switching
+        const loginForm = document.querySelector('.login-form');
+        const signupForm = document.querySelector('.signup-form');
+        const showSignup = document.getElementById('showSignup');
+        const showLogin = document.getElementById('showLogin');
+
+        showSignup.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.classList.remove('active');
+            signupForm.classList.add('active');
+        });
+
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            signupForm.classList.remove('active');
+            loginForm.classList.add('active');
+        });
+
+        // Password toggles
+        function setupPasswordToggle(inputId, toggleId) {
+            const input = document.getElementById(inputId);
+            const toggle = document.getElementById(toggleId);
+            
+            toggle.addEventListener('click', () => {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    toggle.textContent = 'HIDE';
+                } else {
+                    input.type = 'password';
+                    toggle.textContent = 'SHOW';
+                }
+            });
+        }
+
+        setupPasswordToggle('loginPassword', 'passwordToggle');
+        setupPasswordToggle('signupPassword', 'signupPasswordToggle');
+
+        // Form validation
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function validatePassword(password) {
+            return password.length >= 8;
+        }
+
+        function showError(errorId) {
+            document.getElementById(errorId).classList.add('show');
+        }
+
+        function hideError(errorId) {
+            document.getElementById(errorId).classList.remove('show');
+        }
+
+        function checkLoginForm() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+            
+            btn.disabled = !(email && password);
+        }
+
+        function checkSignupForm() {
+            const email = document.getElementById('signupEmail').value;
+            const username = document.getElementById('signupUsername').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const btn = document.getElementById('signupBtn');
+            
+            btn.disabled = !(email && username && password && confirm);
+        }
+
+        // Login form validation
+        document.getElementById('loginEmail').addEventListener('input', checkLoginForm);
+        document.getElementById('loginPassword').addEventListener('input', checkLoginForm);
+
+        document.getElementById('loginEmail').addEventListener('blur', function() {
+            if (this.value && !validateEmail(this.value)) {
+                showError('emailError');
+            } else {
+                hideError('emailError');
+            }
+        });
+
+        document.getElementById('loginPassword').addEventListener('blur', function() {
+            if (this.value && !validatePassword(this.value)) {
+                showError('passwordError');
+            } else {
+                hideError('passwordError');
+            }
+        });
+
+        // Signup form validation
+        document.getElementById('signupEmail').addEventListener('input', checkSignupForm);
+        document.getElementById('signupUsername').addEventListener('input', checkSignupForm);
+        document.getElementById('signupPassword').addEventListener('input', checkSignupForm);
+        document.getElementById('confirmPassword').addEventListener('input', checkSignupForm);
+
+        document.getElementById('signupEmail').addEventListener('blur', function() {
+            if (this.value && !validateEmail(this.value)) {
+                showError('signupEmailError');
+            } else {
+                hideError('signupEmailError');
+            }
+        });
+
+        document.getElementById('signupPassword').addEventListener('blur', function() {
+            if (this.value && !validatePassword(this.value)) {
+                showError('signupPasswordError');
+            } else {
+                hideError('signupPasswordError');
+            }
+        });
+
+        document.getElementById('confirmPassword').addEventListener('blur', function() {
+            const password = document.getElementById('signupPassword').value;
+            if (this.value && this.value !== password) {
+                showError('confirmPasswordError');
+            } else {
+                hideError('confirmPasswordError');
+            }
+        });
+
+        // Form submissions
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            let hasError = false;
+            
+            if (!validateEmail(email)) {
+                showError('emailError');
+                hasError = true;
+            }
+            
+            if (!validatePassword(password)) {
+                showError('passwordError');
+                hasError = true;
+            }
+            
+            if (hasError) {
+                e.preventDefault();
+            }
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            
+            let hasError = false;
+            
+            if (!validateEmail(email)) {
+                showError('signupEmailError');
+                hasError = true;
+            }
+            
+            if (!validatePassword(password)) {
+                showError('signupPasswordError');
+                hasError = true;
+            }
+            
+            if (password !== confirm) {
+                showError('confirmPasswordError');
+                hasError = true;
+            }
+            
+            if (hasError) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

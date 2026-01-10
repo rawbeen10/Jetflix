@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment - Jetflix</title>
+    {% load static %}
+    <style>
+        /* Netflix-inspired Payment Page Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .payment-hero {
+            min-height: 100vh;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.9) 100%),
+                        url('https://assets.nflxext.com/ffe/siteui/vlv3/web/en-US/b1a04881-0123-4f6e-be96-9c65c1b2fac9/background.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .payment-navbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .payment-logo {
+            color: #e50914;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+
+        .payment-content {
+            max-width: 500px;
+            width: 100%;
+            padding: 0 20px;
+        }
+
+        .payment-container {
+            background: rgba(0, 0, 0, 0.75);
+            border-radius: 4px;
+            padding: 60px 68px 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .payment-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .payment-subtitle {
+            font-size: 1.125rem;
+            color: #b3b3b3;
+            margin-bottom: 2rem;
+        }
+
+        .price-display {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #e50914;
+            margin: 2rem 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .price-subtitle {
+            font-size: 1rem;
+            color: #737373;
+            margin-bottom: 2rem;
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        .features-list li::before {
+            content: '✓';
+            color: #46d369;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 1.25rem;
+        }
+
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .payment-btn {
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .payment-btn-esewa {
+            background: #60bb46;
+            color: #fff;
+        }
+
+        .payment-btn-esewa:hover {
+            background: #4a9936;
+            transform: translateY(-1px);
+        }
+
+        .payment-btn-demo {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .payment-btn-demo:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .security-info {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .security-info p {
+            color: #b3b3b3;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .security-badges {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .security-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #e5e5e5;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .messages {
+            margin-bottom: 1rem;
+        }
+
+        .messages .alert {
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .messages .alert-success {
+            background: rgba(70, 211, 105, 0.2);
+            color: #46d369;
+            border: 1px solid rgba(70, 211, 105, 0.3);
+        }
+
+        .messages .alert-error {
+            background: rgba(232, 124, 3, 0.2);
+            color: #e87c03;
+            border: 1px solid rgba(232, 124, 3, 0.3);
+        }
+
+        /* Footer */
+        .auth-footer {
+            background: #000;
+            padding: 2rem 0;
+            border-top: 1px solid #333;
+            margin-top: 4rem;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 50px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #737373;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #fff;
+        }
+
+        .footer-bottom {
+            color: #737373;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .footer-disclaimer {
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .payment-navbar {
+                padding: 20px 30px;
+            }
+
+            .payment-logo {
+                font-size: 2rem;
+            }
+
+            .payment-container {
+                padding: 40px 30px;
+            }
+
+            .payment-title {
+                font-size: 1.75rem;
+            }
+
+            .price-display {
+                font-size: 2.5rem;
+            }
+
+            .footer-container {
+                padding: 0 30px;
+            }
+
+            .footer-links {
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .payment-navbar {
+                padding: 15px 20px;
+            }
+
+            .payment-logo {
+                font-size: 1.75rem;
+            }
+
+            .payment-container {
+                padding: 30px 20px;
+            }
+
+            .payment-title {
+                font-size: 1.5rem;
+            }
+
+            .price-display {
+                font-size: 2rem;
+            }
+
+            .footer-container {
+                padding: 0 20px;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .security-badges {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-hero">
+        <!-- Navigation -->
+        <nav class="payment-navbar">
+            <a href="/" class="payment-logo">JETFLIX</a>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="payment-content">
+            <div class="payment-container">
+                <h1 class="payment-title">Unlock Streaming</h1>
+                <p class="payment-subtitle">Complete your payment to access unlimited movies</p>
+                
+                <!-- Messages -->
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="price-display">Rs. 500</div>
+                <p class="price-subtitle">One-time payment • Lifetime access</p>
+
+                <ul class="features-list">
+                    <li>Unlimited movie streaming</li>
+                    <li>High-definition quality</li>
+                    <li>No advertisements</li>
+                    <li>All content library access</li>
+                </ul>
+
+                <div class="payment-methods">
+                    <!-- eSewa Payment -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="payment_method" value="esewa">
+                        <button type="submit" class="payment-btn payment-btn-esewa">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            Secure Payment via eSewa
+                        </button>
+                    </form>
+                </div>
+
+                <div class="security-info">
+                    <p><strong>Your payment is secure</strong></p>
+                    <p>We use industry-standard encryption to protect your data</p>
+                    
+                    <div class="security-badges">
+                        <span class="security-badge">SSL Encrypted</span>
+                        <span class="security-badge">eSewa Verified</span>
+                        <span class="security-badge">Secure Checkout</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="auth-footer">
+        <div class="footer-container">
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact</a>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Jetflix. All rights reserved.</p>
+                <div class="footer-disclaimer">
+                    Payments are securely processed via eSewa.
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
