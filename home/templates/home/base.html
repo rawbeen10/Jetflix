@@ -908,7 +908,10 @@
         
         // Progress bar
         this.progressBar.addEventListener('click', (e) => this.seek(e));
-        this.progressBar.addEventListener('mousedown', () => this.isDragging = true);
+        this.progressBar.addEventListener('mousedown', (e) => {
+          this.isDragging = true;
+          this.seek(e);
+        });
         document.addEventListener('mouseup', () => this.isDragging = false);
         this.progressBar.addEventListener('mousemove', (e) => {
           if (this.isDragging) this.seek(e);
@@ -1032,8 +1035,9 @@
       }
       
       seek(e) {
+        if (!this.video.duration) return;
         const rect = this.progressBar.getBoundingClientRect();
-        const pos = (e.clientX - rect.left) / rect.width;
+        const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         this.video.currentTime = pos * this.video.duration;
       }
       
@@ -1114,10 +1118,12 @@
             this.close();
             break;
           case 'ArrowLeft':
-            this.video.currentTime -= 10;
+            e.preventDefault();
+            this.video.currentTime = Math.max(0, this.video.currentTime - 5);
             break;
           case 'ArrowRight':
-            this.video.currentTime += 10;
+            e.preventDefault();
+            this.video.currentTime = Math.min(this.video.duration, this.video.currentTime + 5);
             break;
           case 'ArrowUp':
             e.preventDefault();
