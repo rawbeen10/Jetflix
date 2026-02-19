@@ -344,6 +344,60 @@
         right: -100%;
       }
     }
+
+    /* =============================================
+       THEATER MODE CSS — NEW / FIXED
+       ============================================= */
+
+    /* Theater mode: full-width cinematic layout */
+    .jetflix-player.theater-mode {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 10000;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .jetflix-player.theater-mode .player-container {
+      width: 100%;
+      max-width: 100%;
+      height: 100%;
+      border-radius: 0;
+    }
+
+    .jetflix-player.theater-mode .video-wrapper {
+      height: calc(100vh - 110px); /* leave room for header + controls */
+    }
+
+    .jetflix-player.theater-mode .jetflix-video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Fullscreen icon swap */
+    #fullscreenBtn .icon-fullscreen-enter { display: block; }
+    #fullscreenBtn .icon-fullscreen-exit  { display: none;  }
+
+    .jetflix-player.is-fullscreen #fullscreenBtn .icon-fullscreen-enter { display: none;  }
+    .jetflix-player.is-fullscreen #fullscreenBtn .icon-fullscreen-exit  { display: block; }
+
+    /* Theater button icon swap */
+    #theaterBtn .icon-theater-enter { display: block; }
+    #theaterBtn .icon-theater-exit  { display: none;  }
+
+    .jetflix-player.theater-mode #theaterBtn .icon-theater-enter { display: none;  }
+    .jetflix-player.theater-mode #theaterBtn .icon-theater-exit  { display: block; }
+
+    /* Active state highlight for theater button */
+    #theaterBtn.active {
+      color: #e50914;
+    }
   </style>
 </head>
 <body>
@@ -481,7 +535,165 @@
     {% endblock %}
   </main>
 
-  
+  <!-- Enhanced JetFlix Video Player -->
+  <div class="jetflix-player" id="jetflixPlayer">
+    <div class="player-container">
+      <div class="player-header" id="playerHeader">
+        <h2 class="player-title" id="playerTitle">Movie Title</h2>
+        <button class="player-close" id="playerCloseBtn" onclick="closeJetflixPlayer()">&times;</button>
+      </div>
+      
+      <div class="video-wrapper">
+        <video class="jetflix-video" id="jetflixVideo"></video>
+        <div class="loading-spinner" id="loadingSpinner"></div>
+        <div class="player-overlay" id="playerOverlay"></div>
+        <button class="center-play-btn" id="centerPlayBtn">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </button>
+        <div class="speed-display" id="speedDisplay">1x</div>
+      </div>
+      
+      <div class="custom-controls" id="customControls">
+        <div class="progress-container" id="progressBar">
+          <div class="progress-bar">
+            <div class="progress-buffered" id="progressBuffered"></div>
+            <div class="progress-filled" id="progressFilled"></div>
+          </div>
+        </div>
+        
+        <div class="controls-row">
+          <div class="controls-left">
+            <button class="control-btn play-pause-btn" id="playPauseBtn">
+              <span id="playIcon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </span>
+              <span id="pauseIcon" style="display:none;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                </svg>
+              </span>
+            </button>
+            
+            <button class="control-btn" id="rewindBtn" title="Rewind 10s (←)">
+              <!-- Clean rewind icon -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                <text x="12" y="14.5" font-size="5.5" fill="currentColor" text-anchor="middle" font-family="sans-serif" font-weight="bold">10</text>
+              </svg>
+            </button>
+
+            <button class="control-btn" id="forwardBtn" title="Forward 10s (→)">
+              <!-- Clean forward icon -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/>
+                <text x="12" y="14.5" font-size="5.5" fill="currentColor" text-anchor="middle" font-family="sans-serif" font-weight="bold">10</text>
+              </svg>
+            </button>
+            
+            <div class="volume-container">
+              <button class="control-btn" id="muteBtn">
+                <span id="volumeIcon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  </svg>
+                </span>
+                <span id="muteIcon" style="display:none;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <line x1="23" y1="9" x2="17" y2="15"/>
+                    <line x1="17" y1="9" x2="23" y2="15"/>
+                  </svg>
+                </span>
+              </button>
+              <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100">
+            </div>
+            
+            <span class="time-display">
+              <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+            </span>
+          </div>
+          
+          <div class="controls-right">
+            <div class="quality-selector">
+              <button class="dropdown-btn" id="qualityBtn">
+                <span id="currentQuality">Auto</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7 10l5 5 5-5z"/>
+                </svg>
+              </button>
+              <div class="dropdown-menu" id="qualityMenu">
+                <div class="dropdown-item active" data-quality="auto">Auto <span class="check">✓</span></div>
+                <div class="dropdown-item" data-quality="1080">1080p <span class="check">✓</span></div>
+                <div class="dropdown-item" data-quality="720">720p <span class="check">✓</span></div>
+                <div class="dropdown-item" data-quality="480">480p <span class="check">✓</span></div>
+              </div>
+            </div>
+            
+            <div class="subtitle-selector">
+              <button class="dropdown-btn" id="subtitleBtn">
+                <span id="currentSubtitle">Off</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7 10l5 5 5-5z"/>
+                </svg>
+              </button>
+              <div class="dropdown-menu" id="subtitleMenu">
+                <div class="dropdown-item active" data-subtitle="off">Off <span class="check">✓</span></div>
+                <div class="dropdown-item" data-subtitle="en">English <span class="check">✓</span></div>
+                <div class="dropdown-item" data-subtitle="es">Spanish <span class="check">✓</span></div>
+                <div class="dropdown-item" data-subtitle="fr">French <span class="check">✓</span></div>
+              </div>
+            </div>
+            
+            <button class="control-btn pip-btn" id="pipBtn" title="Picture in Picture (P)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <rect x="13" y="11" width="7" height="5" rx="1" ry="1"/>
+              </svg>
+            </button>
+
+            <!-- ✅ NEW: Theater Mode Button (T key) -->
+            <button class="control-btn" id="theaterBtn" title="Theater Mode (T)">
+              <!-- Enter theater icon -->
+              <span class="icon-theater-enter">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="5" width="22" height="14" rx="2" ry="2"/>
+                </svg>
+              </span>
+              <!-- Exit theater icon -->
+              <span class="icon-theater-exit">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="3" width="22" height="18" rx="2" ry="2"/>
+                  <line x1="8" y1="21" x2="8" y2="3"/>
+                  <line x1="16" y1="21" x2="16" y2="3"/>
+                </svg>
+              </span>
+            </button>
+
+            <!-- ✅ FIXED: Fullscreen Button with dual icons -->
+            <button class="control-btn" id="fullscreenBtn" title="Fullscreen (F)">
+              <!-- Enter fullscreen icon -->
+              <span class="icon-fullscreen-enter">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                </svg>
+              </span>
+              <!-- Exit fullscreen icon -->
+              <span class="icon-fullscreen-exit">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Footer -->
   <footer class="footer">
@@ -538,10 +750,8 @@
       });
 
       {% if user.is_authenticated %}
-      // Initialize search sidebar if on homepage
-      if (typeof initSearchSidebar === 'function') {
-        initSearchSidebar();
-      }
+      // Initialize search sidebar
+      initSearchSidebar();
       {% endif %}
     });
 
@@ -554,21 +764,15 @@
     let searchTimeout;
 
     function initSearchSidebar() {
-      // Fetch all movies data (you'll need to provide this from Django)
       sidebarMovies = window.allMoviesData || [];
       sidebarFilteredMovies = [...sidebarMovies];
       
-      // Initialize filters
       initializeSidebarFilters();
-      
-      // Don't display movies initially - wait for user input
       displayInitialState();
       
-      // Setup search input listener
       const searchInput = document.getElementById('sidebarSearchInput');
       searchInput.addEventListener('input', handleSidebarSearch);
       
-      // Setup filter button
       const filterBtn = document.getElementById('sidebarFilterBtn');
       filterBtn.addEventListener('click', toggleSidebarFilters);
     }
@@ -576,14 +780,12 @@
     function initializeSidebarFilters() {
       if (sidebarMovies.length === 0) return;
 
-      // Extract unique languages
       const languages = [...new Set(sidebarMovies.map(m => m.language))].filter(l => l && l !== 'Unknown');
       const languageContainer = document.getElementById('sidebarLanguageFilters');
       languageContainer.innerHTML = languages.map(lang => 
         `<div class="sidebar-filter-option" onclick="toggleSidebarFilter('language', '${lang}', this)">${lang}</div>`
       ).join('');
 
-      // Extract unique genres
       const genresSet = new Set();
       sidebarMovies.forEach(m => {
         if (m.genres) {
@@ -620,7 +822,6 @@
     function applySidebarFilters() {
       let filtered = [...sidebarMovies];
 
-      // Apply search query if exists
       const searchQuery = document.getElementById('sidebarSearchInput').value.trim().toLowerCase();
       if (searchQuery) {
         filtered = filtered.filter(m => 
@@ -630,12 +831,10 @@
         );
       }
 
-      // Apply language filter
       if (sidebarSelectedLanguages.length > 0) {
         filtered = filtered.filter(m => sidebarSelectedLanguages.includes(m.language));
       }
 
-      // Apply genre filter
       if (sidebarSelectedGenres.length > 0) {
         filtered = filtered.filter(m => {
           const movieGenres = m.genres.split(',').map(g => g.trim());
@@ -646,7 +845,6 @@
       sidebarFilteredMovies = filtered;
       displaySidebarResults(filtered);
       
-      // Update filter button state
       const filterBtn = document.getElementById('sidebarFilterBtn');
       if (sidebarSelectedLanguages.length > 0 || sidebarSelectedGenres.length > 0) {
         filterBtn.classList.add('active');
@@ -654,7 +852,6 @@
         filterBtn.classList.remove('active');
       }
       
-      // Hide filter panel
       document.getElementById('sidebarFilterPanel').classList.remove('show');
     }
 
@@ -669,7 +866,6 @@
       document.getElementById('sidebarFilterBtn').classList.remove('active');
       document.getElementById('sidebarFilterPanel').classList.remove('show');
       
-      // Reapply search without filters
       handleSidebarSearch({ target: document.getElementById('sidebarSearchInput') });
     }
 
@@ -682,7 +878,6 @@
       clearTimeout(searchTimeout);
       const query = e.target.value.trim().toLowerCase();
       
-      // If no query, show initial state
       if (query.length === 0) {
         displayInitialState();
         return;
@@ -697,7 +892,6 @@
           (m.cast && m.cast.toLowerCase().includes(query))
         );
         
-        // Apply filters if any
         if (sidebarSelectedLanguages.length > 0) {
           results = results.filter(m => sidebarSelectedLanguages.includes(m.language));
         }
@@ -754,7 +948,6 @@
       document.getElementById('searchOverlay').classList.add('show');
       document.body.style.overflow = 'hidden';
       
-      // Focus search input
       setTimeout(() => {
         document.getElementById('sidebarSearchInput').focus();
       }, 100);
@@ -767,12 +960,9 @@
     }
 
     function openMovieModalFromSidebar(movieId) {
-      // This function should trigger the modal from homepage
-      // If on homepage, call the existing openModal function
       if (typeof openModal === 'function') {
         const index = sidebarFilteredMovies.findIndex(m => m.id === movieId);
         if (index !== -1) {
-          // Update the global movies array reference for the modal
           if (typeof movies !== 'undefined') {
             movies.length = 0;
             movies.push(...sidebarFilteredMovies);
@@ -781,12 +971,10 @@
           closeSearchSidebar();
         }
       } else {
-        // If not on homepage, redirect to movie detail or landing page
         window.location.href = `/movies/${movieId}/`;
       }
     }
 
-    // Close sidebar with Escape key
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         closeSearchSidebar();
@@ -836,128 +1024,248 @@
             dropdownMenu.classList.remove('show');
           }
         });
-        
-        // Debug log
-        console.log('Profile dropdown initialized');
-      } else {
-        console.log('Profile elements not found:', { profileBtn, dropdownMenu });
       }
       {% endif %}
     });
   </script>
   
-  <!-- Enhanced JetFlix Video Player JavaScript -->
+  <!-- ============================================================
+       FIXED JetFlix Video Player JavaScript
+       Changes:
+       - Fullscreen button icon swaps correctly via CSS class
+       - Theater mode added as a dedicated button + T key
+       - Fullscreen exits theater mode and vice versa
+       - Keyboard shortcuts only fire when player is open
+       - All buttons properly stop event propagation
+       - rewind/forward show visual feedback
+  ============================================================ -->
   <script>
+    let jetflixPlayer = null;
+    
     class JetflixPlayer {
       constructor() {
-        this.player = document.getElementById('jetflixPlayer');
-        this.video = document.getElementById('jetflixVideo');
-        this.playerTitle = document.getElementById('playerTitle');
-        this.playerHeader = document.getElementById('playerHeader');
-        this.customControls = document.getElementById('customControls');
-        this.playPauseBtn = document.getElementById('playPauseBtn');
-        this.playIcon = document.getElementById('playIcon');
-        this.pauseIcon = document.getElementById('pauseIcon');
+        this.player        = document.getElementById('jetflixPlayer');
+        this.video         = document.getElementById('jetflixVideo');
+        this.playerTitle   = document.getElementById('playerTitle');
+        this.playerHeader  = document.getElementById('playerHeader');
+        this.customControls= document.getElementById('customControls');
+        this.playPauseBtn  = document.getElementById('playPauseBtn');
+        this.playIcon      = document.getElementById('playIcon');
+        this.pauseIcon     = document.getElementById('pauseIcon');
         this.centerPlayBtn = document.getElementById('centerPlayBtn');
-        this.progressBar = document.getElementById('progressBar');
-        this.progressFilled = document.getElementById('progressFilled');
+        this.progressBar   = document.getElementById('progressBar');
+        this.progressFilled= document.getElementById('progressFilled');
         this.progressBuffered = document.getElementById('progressBuffered');
         this.currentTimeEl = document.getElementById('currentTime');
-        this.durationEl = document.getElementById('duration');
-        this.volumeSlider = document.getElementById('volumeSlider');
-        this.muteBtn = document.getElementById('muteBtn');
-        this.volumeIcon = document.getElementById('volumeIcon');
-        this.muteIcon = document.getElementById('muteIcon');
+        this.durationEl    = document.getElementById('duration');
+        this.volumeSlider  = document.getElementById('volumeSlider');
+        this.muteBtn       = document.getElementById('muteBtn');
+        this.volumeIcon    = document.getElementById('volumeIcon');
+        this.muteIcon      = document.getElementById('muteIcon');
         this.fullscreenBtn = document.getElementById('fullscreenBtn');
-        this.loadingSpinner = document.getElementById('loadingSpinner');
+        this.theaterBtn    = document.getElementById('theaterBtn');   // NEW
+        this.loadingSpinner= document.getElementById('loadingSpinner');
         this.playerOverlay = document.getElementById('playerOverlay');
-        this.qualityBtn = document.getElementById('qualityBtn');
-        this.qualityMenu = document.getElementById('qualityMenu');
-        this.subtitleBtn = document.getElementById('subtitleBtn');
-        this.subtitleMenu = document.getElementById('subtitleMenu');
-        this.pipBtn = document.getElementById('pipBtn');
-        this.speedDisplay = document.getElementById('speedDisplay');
-        this.currentQuality = document.getElementById('currentQuality');
+        this.qualityBtn    = document.getElementById('qualityBtn');
+        this.qualityMenu   = document.getElementById('qualityMenu');
+        this.subtitleBtn   = document.getElementById('subtitleBtn');
+        this.subtitleMenu  = document.getElementById('subtitleMenu');
+        this.pipBtn        = document.getElementById('pipBtn');
+        this.speedDisplay  = document.getElementById('speedDisplay');
+        this.currentQuality  = document.getElementById('currentQuality');
         this.currentSubtitle = document.getElementById('currentSubtitle');
         
-        this.controlsTimeout = null;
-        this.isPlaying = false;
-        this.isDragging = false;
-        this.currentSpeed = 1;
-        this.currentQualityValue = 'auto';
+        this.controlsTimeout      = null;
+        this.isPlaying            = false;
+        this.isDragging           = false;
+        this.wasPlayingBeforeDrag = false;
+        this.currentSpeed         = 1;
+        this.currentQualityValue  = 'auto';
         this.currentSubtitleValue = 'off';
+        this.isTheaterMode        = false;   // NEW: track theater state
         
         this.initializeEvents();
+        this.initializeFullscreenListener();
       }
       
+      // ─── FULLSCREEN LISTENER ────────────────────────────────────────────────
+      initializeFullscreenListener() {
+        const handler = () => this.onFullscreenChange();
+        document.addEventListener('fullscreenchange',       handler);
+        document.addEventListener('webkitfullscreenchange', handler);
+        document.addEventListener('mozfullscreenchange',    handler);
+        document.addEventListener('MSFullscreenChange',     handler);
+      }
+      
+      onFullscreenChange() {
+        const isFullscreen = !!(
+          document.fullscreenElement        ||
+          document.webkitFullscreenElement  ||
+          document.mozFullScreenElement     ||
+          document.msFullscreenElement
+        );
+
+        // Toggle CSS class on player so CSS handles icon swap
+        if (isFullscreen) {
+          this.player.classList.add('is-fullscreen');
+          // Exit theater when entering fullscreen
+          if (this.isTheaterMode) {
+            this.isTheaterMode = false;
+            this.player.classList.remove('theater-mode');
+            if (this.theaterBtn) this.theaterBtn.classList.remove('active');
+          }
+        } else {
+          this.player.classList.remove('is-fullscreen');
+        }
+      }
+      
+      // ─── ALL EVENTS ─────────────────────────────────────────────────────────
       initializeEvents() {
-        // Video events
-        this.video.addEventListener('loadstart', () => this.showLoading());
-        this.video.addEventListener('canplay', () => this.hideLoading());
-        this.video.addEventListener('timeupdate', () => this.updateProgress());
+        // Video lifecycle events
+        this.video.addEventListener('loadstart',      () => this.showLoading());
+        this.video.addEventListener('canplay',        () => this.hideLoading());
+        this.video.addEventListener('timeupdate',     () => this.updateProgress());
         this.video.addEventListener('loadedmetadata', () => this.updateDuration());
-        this.video.addEventListener('progress', () => this.updateBuffered());
-        this.video.addEventListener('play', () => this.onPlay());
-        this.video.addEventListener('pause', () => this.onPause());
-        this.video.addEventListener('ended', () => this.onEnded());
-        
-        // Control events
-        this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
-        this.centerPlayBtn.addEventListener('click', () => this.togglePlayPause());
-        this.playerOverlay.addEventListener('click', () => this.togglePlayPause());
-        
-        // Progress bar
-        this.progressBar.addEventListener('click', (e) => this.seek(e));
+        this.video.addEventListener('progress',       () => this.updateBuffered());
+        this.video.addEventListener('play',           () => this.onPlay());
+        this.video.addEventListener('pause',          () => this.onPause());
+        this.video.addEventListener('ended',          () => this.onEnded());
+
+        // ── Play / Pause ──────────────────────────────────────────────────────
+        this.playPauseBtn.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          this.togglePlayPause();
+        });
+        this.centerPlayBtn.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          this.togglePlayPause();
+        });
+        this.video.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          this.togglePlayPause();
+        });
+
+        // ── Rewind ────────────────────────────────────────────────────────────
+        const rewindBtn = document.getElementById('rewindBtn');
+        if (rewindBtn) {
+          rewindBtn.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            e.stopPropagation();
+            console.log('Rewind clicked');
+            this.rewind();
+          });
+        } else {
+          console.error('Rewind button not found');
+        }
+
+        // ── Forward ───────────────────────────────────────────────────────────
+        const forwardBtn = document.getElementById('forwardBtn');
+        if (forwardBtn) {
+          forwardBtn.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            e.stopPropagation();
+            console.log('Forward clicked');
+            this.forward();
+          });
+        } else {
+          console.error('Forward button not found');
+        }
+
+        // ── Progress / Seek ───────────────────────────────────────────────────
+        this.progressBar.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          const wasPlaying = !this.video.paused;
+          this.seek(e);
+          if (wasPlaying) setTimeout(() => this.video.play(), 50);
+        });
         this.progressBar.addEventListener('mousedown', (e) => {
+          e.preventDefault(); e.stopPropagation();
           this.isDragging = true;
+          this.wasPlayingBeforeDrag = !this.video.paused;
           this.seek(e);
         });
-        document.addEventListener('mouseup', () => this.isDragging = false);
+        document.addEventListener('mouseup', () => {
+          if (this.isDragging && this.wasPlayingBeforeDrag) {
+            setTimeout(() => this.video.play(), 50);
+          }
+          this.isDragging = false;
+        });
         this.progressBar.addEventListener('mousemove', (e) => {
-          if (this.isDragging) this.seek(e);
+          if (this.isDragging) { e.preventDefault(); e.stopPropagation(); this.seek(e); }
         });
-        
-        // Volume controls
-        this.volumeSlider.addEventListener('input', () => this.updateVolume());
-        this.muteBtn.addEventListener('click', () => this.toggleMute());
-        
-        // Fullscreen
-        this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
-        
-        // Picture in Picture
-        this.pipBtn.addEventListener('click', () => this.togglePiP());
-        
-        // Quality and Subtitle dropdowns
-        this.qualityBtn.addEventListener('click', (e) => {
+
+        // ── Volume ────────────────────────────────────────────────────────────
+        this.volumeSlider.addEventListener('input', (e) => {
           e.stopPropagation();
-          this.toggleDropdown('quality');
+          this.updateVolume();
         });
-        
-        this.subtitleBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.toggleDropdown('subtitle');
+        this.muteBtn.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          this.toggleMute();
         });
-        
-        // Dropdown item clicks
+
+        // ── Fullscreen ────────────────────────────────────────────────────────
+        this.fullscreenBtn.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          this.toggleFullscreen();
+        });
+
+        // ── Theater Mode (NEW) ────────────────────────────────────────────────
+        if (this.theaterBtn) {
+          this.theaterBtn.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            this.toggleTheaterMode();
+          });
+        }
+
+        // ── PiP ───────────────────────────────────────────────────────────────
+        if (this.pipBtn) {
+          this.pipBtn.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            this.togglePiP();
+          });
+        }
+
+        // ── Quality Dropdown ──────────────────────────────────────────────────
+        if (this.qualityBtn) {
+          this.qualityBtn.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            this.toggleDropdown('quality');
+          });
+        }
+        if (this.subtitleBtn) {
+          this.subtitleBtn.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            this.toggleDropdown('subtitle');
+          });
+        }
         document.querySelectorAll('#qualityMenu .dropdown-item').forEach(item => {
-          item.addEventListener('click', (e) => this.selectQuality(e.target.closest('.dropdown-item').dataset.quality));
+          item.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            this.selectQuality(e.target.closest('.dropdown-item').dataset.quality);
+          });
         });
-        
         document.querySelectorAll('#subtitleMenu .dropdown-item').forEach(item => {
-          item.addEventListener('click', (e) => this.selectSubtitle(e.target.closest('.dropdown-item').dataset.subtitle));
+          item.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            this.selectSubtitle(e.target.closest('.dropdown-item').dataset.subtitle);
+          });
         });
-        
-        // Close dropdowns when clicking outside
         document.addEventListener('click', () => this.closeAllDropdowns());
-        
-        // Mouse movement for controls
+
+        // ── Auto-hide controls ────────────────────────────────────────────────
         this.player.addEventListener('mousemove', () => this.showControls());
         this.player.addEventListener('mouseleave', () => this.hideControls());
-        
-        // Keyboard shortcuts
+
+        // Prevent controls area from bubbling to video (so clicks don't toggle play)
+        this.customControls.addEventListener('click', (e) => e.stopPropagation());
+        this.playerHeader.addEventListener('click',   (e) => e.stopPropagation());
+
+        // ── Keyboard shortcuts ────────────────────────────────────────────────
         document.addEventListener('keydown', (e) => this.handleKeyboard(e));
       }
       
+      // ─── OPEN / CLOSE ────────────────────────────────────────────────────────
       open(videoSrc, title) {
         this.playerTitle.textContent = title;
         this.video.src = videoSrc;
@@ -971,11 +1279,18 @@
         this.video.pause();
         this.video.src = '';
         this.player.classList.remove('active');
+        // Also clean up any special modes
+        this.player.classList.remove('theater-mode', 'is-fullscreen');
+        this.isTheaterMode = false;
+        if (this.theaterBtn) this.theaterBtn.classList.remove('active');
         document.body.style.overflow = 'auto';
         this.centerPlayBtn.classList.remove('show');
         this.hideLoading();
+        // Exit fullscreen if active
+        if (document.fullscreenElement) document.exitFullscreen();
       }
       
+      // ─── PLAY / PAUSE ────────────────────────────────────────────────────────
       togglePlayPause() {
         if (this.video.paused) {
           this.video.play();
@@ -986,25 +1301,34 @@
       
       onPlay() {
         this.isPlaying = true;
-        this.playIcon.style.display = 'none';
+        this.playIcon.style.display  = 'none';
         this.pauseIcon.style.display = 'block';
         this.centerPlayBtn.classList.remove('show');
       }
       
       onPause() {
         this.isPlaying = false;
-        this.playIcon.style.display = 'block';
+        this.playIcon.style.display  = 'block';
         this.pauseIcon.style.display = 'none';
         this.centerPlayBtn.classList.add('show');
       }
       
       onEnded() {
         this.isPlaying = false;
-        this.playIcon.style.display = 'block';
+        this.playIcon.style.display  = 'block';
         this.pauseIcon.style.display = 'none';
         this.centerPlayBtn.classList.add('show');
+        
+        setTimeout(() => {
+          this.close();
+          if (typeof openModal === 'function' && typeof currentMovieId !== 'undefined') {
+            const movieIndex = movies.findIndex(m => m.id === currentMovieId);
+            if (movieIndex !== -1) openModal(movieIndex);
+          }
+        }, 2000);
       }
       
+      // ─── PROGRESS ────────────────────────────────────────────────────────────
       updateProgress() {
         if (!this.isDragging) {
           const progress = (this.video.currentTime / this.video.duration) * 100;
@@ -1029,65 +1353,121 @@
       }
       
       formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
       }
       
       seek(e) {
-        if (!this.video.duration) return;
-        const rect = this.progressBar.getBoundingClientRect();
-        const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        this.video.currentTime = pos * this.video.duration;
-      }
-      
-      updateVolume() {
-        this.video.volume = this.volumeSlider.value / 100;
-        if (this.video.volume === 0) {
-          this.showMuteIcon();
-        } else {
-          this.showVolumeIcon();
+        if (!this.video.duration || isNaN(this.video.duration)) return;
+        e.stopPropagation();
+        const rect   = this.progressBar.getBoundingClientRect();
+        const pos    = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const newTime = pos * this.video.duration;
+        if (!isNaN(newTime) && isFinite(newTime)) {
+          this.video.currentTime = newTime;
         }
       }
       
+      // ─── REWIND / FORWARD ────────────────────────────────────────────────────
+      rewind() {
+        console.log('Rewind method called, current time:', this.video.currentTime);
+        const newTime = Math.max(0, this.video.currentTime - 10);
+        this.video.currentTime = newTime;
+        console.log('New time after rewind:', newTime);
+        this.showIndicator('⏪ -10s');
+      }
+      
+      forward() {
+        console.log('Forward method called, current time:', this.video.currentTime);
+        if (!isNaN(this.video.duration)) {
+          const newTime = Math.min(this.video.duration, this.video.currentTime + 10);
+          this.video.currentTime = newTime;
+          console.log('New time after forward:', newTime);
+        }
+        this.showIndicator('⏩ +10s');
+      }
+      
+      // ─── VOLUME ──────────────────────────────────────────────────────────────
+      updateVolume() {
+        const volume = this.volumeSlider.value / 100;
+        this.video.volume = volume;
+        this.video.muted  = false;
+        volume === 0 ? this.showMuteIcon() : this.showVolumeIcon();
+      }
+      
       toggleMute() {
-        if (this.video.muted) {
-          this.video.muted = false;
-          this.showVolumeIcon();
+        if (this.video.muted || this.video.volume === 0) {
+          this.video.muted   = false;
+          this.video.volume  = this.volumeSlider.value > 0 ? this.volumeSlider.value / 100 : 0.5;
           this.volumeSlider.value = this.video.volume * 100;
+          this.showVolumeIcon();
         } else {
           this.video.muted = true;
           this.showMuteIcon();
-          this.volumeSlider.value = 0;
         }
       }
       
       showVolumeIcon() {
         this.volumeIcon.style.display = 'block';
-        this.muteIcon.style.display = 'none';
+        this.muteIcon.style.display   = 'none';
       }
       
       showMuteIcon() {
         this.volumeIcon.style.display = 'none';
-        this.muteIcon.style.display = 'block';
+        this.muteIcon.style.display   = 'block';
       }
       
+      // ─── FULLSCREEN (FIXED) ───────────────────────────────────────────────────
       toggleFullscreen() {
-        if (!document.fullscreenElement) {
-          this.player.requestFullscreen();
+        const inFullscreen = !!(
+          document.fullscreenElement       ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement    ||
+          document.msFullscreenElement
+        );
+
+        if (!inFullscreen) {
+          // Request fullscreen on the player container
+          const el = this.player;
+          if      (el.requestFullscreen)       el.requestFullscreen();
+          else if (el.webkitRequestFullscreen)  el.webkitRequestFullscreen();
+          else if (el.mozRequestFullScreen)     el.mozRequestFullScreen();
+          else if (el.msRequestFullscreen)      el.msRequestFullscreen();
         } else {
-          document.exitFullscreen();
+          if      (document.exitFullscreen)       document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          else if (document.mozCancelFullScreen)  document.mozCancelFullScreen();
+          else if (document.msExitFullscreen)     document.msExitFullscreen();
         }
+        // Icon is updated by onFullscreenChange() via CSS class — no manual icon swap needed
       }
       
+      // ─── THEATER MODE (FIXED) ────────────────────────────────────────────────
+      toggleTheaterMode() {
+        // Don't allow theater mode while in true fullscreen
+        const inFullscreen = !!(
+          document.fullscreenElement       ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement    ||
+          document.msFullscreenElement
+        );
+        if (inFullscreen) return;
+
+        this.isTheaterMode = !this.isTheaterMode;
+        this.player.classList.toggle('theater-mode', this.isTheaterMode);
+        if (this.theaterBtn) this.theaterBtn.classList.toggle('active', this.isTheaterMode);
+        this.showIndicator(this.isTheaterMode ? '🎭 Theater Mode' : '🖥 Default Mode');
+      }
+      
+      // ─── CONTROLS VISIBILITY ─────────────────────────────────────────────────
       showControls() {
         this.playerHeader.classList.remove('hidden');
         this.customControls.classList.remove('hidden');
         clearTimeout(this.controlsTimeout);
         this.controlsTimeout = setTimeout(() => {
-          if (this.isPlaying) {
-            this.hideControls();
-          }
+          if (this.isPlaying) this.hideControls();
         }, 3000);
       }
       
@@ -1098,68 +1478,91 @@
         }
       }
       
-      showLoading() {
-        this.loadingSpinner.style.display = 'block';
-      }
+      showLoading() { this.loadingSpinner.style.display = 'block'; }
+      hideLoading() { this.loadingSpinner.style.display = 'none';  }
       
-      hideLoading() {
-        this.loadingSpinner.style.display = 'none';
-      }
-      
+      // ─── KEYBOARD SHORTCUTS (FIXED) ──────────────────────────────────────────
       handleKeyboard(e) {
+        // Only fire when player is open
         if (!this.player.classList.contains('active')) return;
+        // Don't steal keys from inputs / textareas
+        if (['INPUT', 'TEXTAREA'].includes(e.target.tagName) || e.target.isContentEditable) return;
         
-        switch(e.code) {
+        switch (e.code) {
           case 'Space':
+          case 'KeyK':
             e.preventDefault();
             this.togglePlayPause();
             break;
-          case 'Escape':
-            this.close();
-            break;
+
           case 'ArrowLeft':
             e.preventDefault();
-            this.video.currentTime = Math.max(0, this.video.currentTime - 5);
+            this.rewind();
             break;
+
           case 'ArrowRight':
             e.preventDefault();
-            this.video.currentTime = Math.min(this.video.duration, this.video.currentTime + 5);
+            this.forward();
             break;
+
           case 'ArrowUp':
             e.preventDefault();
-            this.video.volume = Math.min(1, this.video.volume + 0.1);
-            this.volumeSlider.value = this.video.volume * 100;
+            {
+              const vol = Math.min(1, this.video.volume + 0.1);
+              this.video.volume = vol;
+              this.volumeSlider.value = vol * 100;
+              this.video.muted = false;
+              this.showVolumeIcon();
+              this.showIndicator(`🔊 ${Math.round(vol * 100)}%`);
+            }
             break;
+
           case 'ArrowDown':
             e.preventDefault();
-            this.video.volume = Math.max(0, this.video.volume - 0.1);
-            this.volumeSlider.value = this.video.volume * 100;
+            {
+              const vol = Math.max(0, this.video.volume - 0.1);
+              this.video.volume = vol;
+              this.volumeSlider.value = vol * 100;
+              if (vol === 0) this.showMuteIcon();
+              this.showIndicator(`🔉 ${Math.round(vol * 100)}%`);
+            }
             break;
+
           case 'KeyF':
+            e.preventDefault();
             this.toggleFullscreen();
             break;
+
+          case 'KeyT':
+            e.preventDefault();
+            this.toggleTheaterMode();
+            break;
+
           case 'KeyM':
+            e.preventDefault();
             this.toggleMute();
             break;
+
           case 'KeyP':
+            e.preventDefault();
             this.togglePiP();
             break;
-          case 'Comma':
-            this.changeSpeed(-0.25);
-            break;
-          case 'Period':
-            this.changeSpeed(0.25);
-            break;
-          case 'KeyC':
-            this.toggleDropdown('subtitle');
+
+          case 'Escape':
+            // Browser handles Escape to exit fullscreen natively;
+            // we only close the player if not in fullscreen
+            if (!document.fullscreenElement) {
+              e.preventDefault();
+              this.close();
+            }
             break;
         }
       }
       
+      // ─── DROPDOWNS ───────────────────────────────────────────────────────────
       toggleDropdown(type) {
-        const menu = type === 'quality' ? this.qualityMenu : this.subtitleMenu;
-        const otherMenu = type === 'quality' ? this.subtitleMenu : this.qualityMenu;
-        
+        const menu      = type === 'quality' ? this.qualityMenu   : this.subtitleMenu;
+        const otherMenu = type === 'quality' ? this.subtitleMenu  : this.qualityMenu;
         otherMenu.classList.remove('show');
         menu.classList.toggle('show');
       }
@@ -1172,69 +1575,74 @@
       selectQuality(quality) {
         this.currentQualityValue = quality;
         this.currentQuality.textContent = quality === 'auto' ? 'Auto' : quality + 'p';
-        
         document.querySelectorAll('#qualityMenu .dropdown-item').forEach(item => {
           item.classList.toggle('active', item.dataset.quality === quality);
         });
-        
         this.closeAllDropdowns();
       }
       
       selectSubtitle(subtitle) {
         this.currentSubtitleValue = subtitle;
-        const subtitleNames = {
-          'off': 'Off',
-          'en': 'English',
-          'es': 'Spanish',
-          'fr': 'French'
-        };
-        this.currentSubtitle.textContent = subtitleNames[subtitle];
-        
+        const names = { off: 'Off', en: 'English', es: 'Spanish', fr: 'French' };
+        this.currentSubtitle.textContent = names[subtitle] || subtitle;
         document.querySelectorAll('#subtitleMenu .dropdown-item').forEach(item => {
           item.classList.toggle('active', item.dataset.subtitle === subtitle);
         });
-        
         this.closeAllDropdowns();
       }
       
+      // ─── PiP ─────────────────────────────────────────────────────────────────
       togglePiP() {
         if (document.pictureInPictureElement) {
           document.exitPictureInPicture();
         } else if (document.pictureInPictureEnabled) {
-          this.video.requestPictureInPicture().catch(error => {
-            console.error('Error entering PiP mode:', error);
+          this.video.requestPictureInPicture().catch(err => {
+            console.error('PiP error:', err);
           });
         }
       }
       
+      // ─── SHARED OSD INDICATOR ────────────────────────────────────────────────
+      // All on-screen indicators now use one method to avoid conflicts
+      showIndicator(text) {
+        clearTimeout(this._indicatorTimeout);
+        this.speedDisplay.textContent = text;
+        this.speedDisplay.classList.add('show');
+        this._indicatorTimeout = setTimeout(() => {
+          this.speedDisplay.classList.remove('show');
+        }, 800);
+      }
+      
+      // Keep old method names alive so any external calls don't break
+      showSkipIndicator(text)        { this.showIndicator(text); }
+      showVolumeIndicator(vol)       { this.showIndicator(`🔊 ${vol}%`); }
+      showNotificationIndicator(txt) { this.showIndicator(txt); }
+
       changeSpeed(delta) {
         this.currentSpeed = Math.max(0.25, Math.min(2, this.currentSpeed + delta));
         this.video.playbackRate = this.currentSpeed;
-        
-        this.speedDisplay.textContent = this.currentSpeed + 'x';
-        this.speedDisplay.classList.add('show');
-        
-        setTimeout(() => {
-          this.speedDisplay.classList.remove('show');
-        }, 1000);
-      }
+        this.showIndicator(this.currentSpeed + 'x');
       }
     }
     
-    // Initialize player
-    const jetflixPlayer = new JetflixPlayer();
+    // ── Bootstrap ──────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+      jetflixPlayer = new JetflixPlayer();
+    });
     
-    // Global functions for compatibility
     function openJetflixPlayer(videoSrc, title) {
-      jetflixPlayer.open(videoSrc, title);
+      if (jetflixPlayer) {
+        jetflixPlayer.open(videoSrc, title);
+      } else {
+        console.error('JetflixPlayer not initialized');
+      }
     }
     
     function closeJetflixPlayer() {
-      jetflixPlayer.close();
+      if (jetflixPlayer) jetflixPlayer.close();
     }
     
-    // Make functions available globally
-    window.openJetflixPlayer = openJetflixPlayer;
+    window.openJetflixPlayer  = openJetflixPlayer;
     window.closeJetflixPlayer = closeJetflixPlayer;
   </script>
 </body>

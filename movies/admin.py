@@ -3,20 +3,21 @@ from .models import Movie, Watchlist, Review, Language, Genre, WatchHistory, Use
 
 @admin.register(Language)
 class LanguageAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code']
+    list_display = ['id', 'name', 'code']
     search_fields = ['name', 'code']
 
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
-    list_display = ['name']
+    list_display = ['id', 'name']
     search_fields = ['name']
 
 @admin.register(Movie)
 class MovieAdmin(admin.ModelAdmin):
-    list_display = ['title', 'year', 'get_genres', 'language', 'review_stars', 'views', 'is_published']
+    list_display = ['id', 'title', 'year', 'get_genres', 'language', 'review_stars', 'views', 'is_published']
     list_filter = ['is_published', 'year', 'language', 'genres']
     search_fields = ['title', 'cast', 'description']
     filter_horizontal = ['genres']  # Nice UI for ManyToMany field
+    ordering = ['-id']
     
     def get_genres(self, obj):
         """Display genres as comma-separated list in admin"""
@@ -25,27 +26,27 @@ class MovieAdmin(admin.ModelAdmin):
 
 @admin.register(Watchlist)
 class WatchlistAdmin(admin.ModelAdmin):
-    list_display = ['user', 'movie', 'added_on']
+    list_display = ['id', 'user', 'movie', 'added_on']
     list_filter = ['added_on']
     search_fields = ['user__username', 'movie__title']
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ['user', 'movie', 'rating', 'created_at']
+    list_display = ['id', 'user', 'movie', 'rating', 'created_at']
     list_filter = ['rating', 'created_at']
     search_fields = ['user__username', 'movie__title', 'review_text']
     readonly_fields = ['created_at', 'updated_at']
 
 @admin.register(WatchHistory)
 class WatchHistoryAdmin(admin.ModelAdmin):
-    list_display = ['user', 'movie', 'watched_at']
+    list_display = ['id', 'user', 'movie', 'watched_at']
     list_filter = ['watched_at']
     search_fields = ['user__username', 'movie__title']
     readonly_fields = ['watched_at']
 
 @admin.register(UserInteraction)
 class UserInteractionAdmin(admin.ModelAdmin):
-    list_display = ['user', 'movie', 'interaction_type', 'score', 'created_at']
+    list_display = ['id', 'user', 'movie', 'interaction_type', 'score', 'created_at']
     list_filter = ['interaction_type', 'created_at']
     search_fields = ['user__username', 'movie__title']
     readonly_fields = ['created_at']

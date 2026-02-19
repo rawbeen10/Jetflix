@@ -63,18 +63,15 @@ def register_view(request):
                 messages.success(request, "Account created successfully! Please complete payment to access movies.")
                 return redirect('payment')
             else:
-                # Return to login page with signup form active and errors
-                return render(request, 'home/login.html', {
-                    'show_signup': True,
-                    'signup_errors': form.errors
-                })
+                # Return to register page with form errors
+                return render(request, 'home/register.html', {'form': form})
         else:
             form = CustomUserCreationForm()
-        return render(request, 'home/login.html', {'show_signup': True})
+        return render(request, 'home/register.html', {'form': form})
     except Exception as e:
         logger.error(f"Error in register_view: {str(e)}")
         messages.error(request, "An error occurred during registration. Please try again.")
-        return render(request, 'home/login.html', {'show_signup': True})
+        return render(request, 'home/register.html', {'form': CustomUserCreationForm()})
 
 
 # Login
@@ -210,7 +207,7 @@ def edit_profile_view(request):
         return render(request, 'home/edit_profile.html')
 
 
-def get_recommended_movies(user, min_interactions=2):
+def get_recommended_movies(user, min_interactions=1):
     """
     Get personalized movie recommendations using collaborative filtering.
     
@@ -227,7 +224,7 @@ def get_recommended_movies(user, min_interactions=2):
         return None  # Indicates new user
     
     # Use the collaborative filtering method from Movie model
-    recommended_movies = Movie.get_recommendations_for_user(user, limit=8)
+    recommended_movies = Movie.get_recommendations_for_user(user, limit=12)
     
     return list(recommended_movies)
 
@@ -252,17 +249,11 @@ def home_page(request):
                 is_new_user = True
                 recommended_movies = []
         
-        
-        all_movies = []
-        if request.user.is_authenticated:
-            all_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').all()
-        
         return render(request, 'home/homepage.html', {
             'movies': recent_movies,
             'trending_movies': trending_movies,
             'recommended_movies': recommended_movies,
             'is_new_user': is_new_user,
-            'all_movies': all_movies, 
         })
     except Exception as e:
         logger.error(f"Error loading home page: {str(e)}")
@@ -272,24 +263,16 @@ def home_page(request):
             'trending_movies': [],
             'recommended_movies': [],
             'is_new_user': False,
-            'all_movies': []
         })
 
 
 def homepage_view(request):
     try:
-        
-        all_movies = []
-        if request.user.is_authenticated:
-            all_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').all()
-        
-        return render(request, 'home/homepage.html', {
-            'all_movies': all_movies
-        })
+        return render(request, 'home/homepage.html')
     except Exception as e:
         logger.error(f"Error in homepage_view: {str(e)}")
         messages.error(request, "Unable to load homepage.")
-        return render(request, 'home/homepage.html', {'all_movies': []})
+        return render(request, 'home/homepage.html')
 
 
 

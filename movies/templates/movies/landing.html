@@ -10,6 +10,11 @@
   body {
     background-color: #141414;
     color: #fff;
+    overflow-x: hidden;
+  }
+
+  html {
+    overflow-x: hidden;
   }
 
   .section {
@@ -81,6 +86,12 @@
     overflow-x: hidden;
     gap: 15px;
     scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  .movies::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 
   .movie-carousel {
@@ -894,8 +905,8 @@
     </div>
   </div>
   
-  <!-- Search Results -->
-  <div class="movies" id="moviesGrid" style="display: none;">
+  /* Search Results -->
+  <div class="movies" id="moviesGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
     {% if movies %}
       {% for movie in movies %}
         <div class="movie-card" onclick="openModal({{ forloop.counter0 }})">

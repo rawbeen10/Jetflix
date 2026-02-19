@@ -381,89 +381,6 @@
     }
   }
 
-  /* Video Player Modal */
-  .video-player-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.95);
-    z-index: 2000;
-    animation: fadeIn 0.3s ease;
-  }
-
-  .video-player-modal.active {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-  }
-
-  .video-player-header {
-    width: 100%;
-    max-width: 1200px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  .video-player-title {
-    font-size: 24px;
-    font-weight: 600;
-    color: #fff;
-  }
-
-  .video-player-close {
-    background-color: transparent;
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    color: #fff;
-    font-size: 24px;
-    cursor: pointer;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
-
-  .video-player-close:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: #fff;
-  }
-
-  .video-player-container {
-    width: 100%;
-    max-width: 1200px;
-    background-color: #000;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-  }
-
-  .video-player-container video {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  @media (max-width: 768px) {
-    .video-player-title {
-      font-size: 18px;
-    }
-
-    .video-player-close {
-      width: 35px;
-      height: 35px;
-      font-size: 20px;
-    }
-  }
-
   .notification {
     position: fixed;
     top: 20px;
@@ -578,20 +495,6 @@
   </div>
 </div>
 
-<!-- Video Player Modal -->
-<div class="video-player-modal" id="videoPlayerModal">
-  <div class="video-player-header">
-    <h2 class="video-player-title" id="videoPlayerTitle">Movie Title</h2>
-    <button class="video-player-close" onclick="closeVideoPlayer()">&times;</button>
-  </div>
-  <div class="video-player-container">
-    <video id="videoPlayer" controls autoplay>
-      <source src="" type="video/mp4">
-      Your browser does not support the video tag.
-    </video>
-  </div>
-</div>
-
 <script>
   const movies = [
     {% for movie in movies %}
@@ -644,33 +547,28 @@
   function playMovie() {
     const movie = movies.find(m => m.id === currentMovieId);
     if (movie && movie.video) {
-      openVideoPlayer(movie);
+      if (typeof openJetflixPlayer === 'function') {
+        openJetflixPlayer(movie.video, movie.title);
+        closeModal();
+      } else {
+        showNotification('Video player not available', 'error');
+      }
     } else {
       showNotification('Video not available', 'error');
     }
   }
 
   function openVideoPlayer(movie) {
-    const videoModal = document.getElementById('videoPlayerModal');
-    const videoPlayer = document.getElementById('videoPlayer');
-    const videoTitle = document.getElementById('videoPlayerTitle');
-    
-    videoTitle.textContent = movie.title;
-    videoPlayer.src = movie.video;
-    videoModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    
-    closeModal();
+    if (typeof openJetflixPlayer === 'function') {
+      openJetflixPlayer(movie.video, movie.title);
+      closeModal();
+    }
   }
 
   function closeVideoPlayer() {
-    const videoModal = document.getElementById('videoPlayerModal');
-    const videoPlayer = document.getElementById('videoPlayer');
-    
-    videoPlayer.pause();
-    videoPlayer.src = '';
-    videoModal.classList.remove('active');
-    document.body.style.overflow = 'auto';
+    if (typeof closeJetflixPlayer === 'function') {
+      closeJetflixPlayer();
+    }
   }
 
   function formatViews(views) {

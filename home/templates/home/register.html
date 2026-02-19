@@ -4,548 +4,310 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - Jetflix</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'home/style.css' %}">
     <style>
-        /* Netflix-inspired Register Page Styles */
-        body {
+        * {
             margin: 0;
             padding: 0;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background: #000;
-            color: #fff;
-            overflow-x: hidden;
+            box-sizing: border-box;
         }
 
-        .register-hero {
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #fff;
             min-height: 100vh;
-            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.8) 100%),
-                        url('https://assets.nflxext.com/ffe/siteui/vlv3/web/en-US/b1a04881-0123-4f6e-be96-9c65c1b2fac9/background.jpg');
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 20px;
             position: relative;
         }
 
-        .register-navbar {
+        .bg-image {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            padding: 20px 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-        }
-
-        .register-logo {
-            color: #e50914;
-            font-size: 2.5rem;
-            font-weight: 700;
-            text-decoration: none;
-            letter-spacing: 0.5px;
-        }
-
-        .register-content {
-            display: grid;
-            grid-template-columns: 1fr 450px;
-            gap: 60px;
-            max-width: 1200px;
             width: 100%;
-            padding: 0 50px;
-            align-items: center;
+            height: 100%;
+            background-image: url('https://assets.nflxext.com/ffe/siteui/vlv3/fc164b4b-f085-44ee-bb7f-ec7df8539eff/d23a1608-7d90-4da1-93d6-bae2fe60a69b/IN-en-20230814-popsignuptwoweeks-perspective_alpha_website_large.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            z-index: 0;
         }
 
-        .hero-text {
-            max-width: 600px;
+        .bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.8) 100%);
+            z-index: 1;
         }
 
-        .hero-headline {
-            font-size: 3.125rem;
-            font-weight: 900;
-            line-height: 1.1;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.45);
+        .signup-container {
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            z-index: 2;
+            margin: 60px auto;
         }
 
-        .hero-subtext {
-            font-size: 1.625rem;
-            font-weight: 400;
-            margin-bottom: 2rem;
-            color: #fff;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.45);
-        }
-
-        .hero-features {
-            list-style: none;
-            padding: 0;
-            margin: 2rem 0;
-        }
-
-        .hero-features li {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-            font-size: 1.125rem;
-            font-weight: 500;
-        }
-
-        .hero-features li::before {
-            content: '✓';
-            color: #46d369;
-            font-weight: bold;
-            margin-right: 12px;
-            font-size: 1.25rem;
-        }
-
-        .trust-signals {
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .trust-signals p {
-            color: #b3b3b3;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .trust-badges {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .trust-badge {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            color: #e5e5e5;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .register-form-container {
+        .signup-card {
             background: rgba(0, 0, 0, 0.75);
             border-radius: 4px;
             padding: 60px 68px 40px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            width: 100%;
-            max-width: 450px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
         }
 
-        .form-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1.75rem;
-            text-align: left;
+        .card-title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 32px;
+            line-height: 1.4;
         }
 
         .form-group {
+            margin-bottom: 20px;
             position: relative;
-            margin-bottom: 1rem;
         }
 
-        .form-group input {
+        .form-input {
             width: 100%;
             padding: 16px 20px;
             background: #333;
             border: none;
             border-radius: 4px;
             color: #fff;
-            font-size: 1rem;
-            outline: none;
-            transition: background 0.2s;
-            border: 2px solid transparent;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
         }
 
-        .form-group input:focus {
+        .form-input:focus {
+            outline: none;
             background: #454545;
             border-color: #e50914;
         }
 
-        .form-group input::placeholder {
-            color: #8c8c8c;
+        .form-input.error {
+            border-color: #ff6b6b;
         }
 
-        .form-group input.error {
-            border-color: #e87c03;
-            background: rgba(232, 124, 3, 0.1);
+        .form-input::placeholder {
+            color: #666;
         }
 
-        .form-submit {
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+        }
+
+        .password-toggle:hover {
+            color: #fff;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 4px;
+            border-left: 3px solid #ff6b6b;
+        }
+
+        .field-error {
+            color: #ff6b6b;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .primary-btn {
             width: 100%;
             padding: 16px;
             background: #e50914;
             border: none;
             border-radius: 4px;
             color: #fff;
-            font-size: 1rem;
+            font-size: 16px;
             font-weight: 500;
             cursor: pointer;
-            margin-top: 1.5rem;
-            transition: background 0.2s;
+            margin-top: 8px;
+            transition: background-color 0.2s ease;
         }
 
-        .form-submit:hover {
-            background: #f40612;
+        .primary-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
         }
 
-        .form-toggle {
+        .primary-btn:not(:disabled):hover {
+            background: #cc0812;
+        }
+
+        .secondary-action {
             text-align: center;
-            margin-top: 1rem;
-            color: #737373;
-            font-size: 0.95rem;
+            margin-top: 24px;
+            font-size: 14px;
+            color: #888;
         }
 
-        .form-toggle a {
+        .secondary-action a {
             color: #fff;
             text-decoration: none;
-            transition: text-decoration 0.2s;
         }
 
-        .form-toggle a:hover {
+        .secondary-action a:hover {
             text-decoration: underline;
         }
 
-        .errorlist {
-            list-style: none;
-            padding: 0;
-            margin: 0.5rem 0 1rem 0;
-        }
-
-        .errorlist li {
-            background: #e87c03;
-            color: #fff;
-            padding: 10px 15px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .messages {
-            margin-bottom: 1rem;
-        }
-
-        .messages .alert {
-            padding: 12px 16px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .messages .alert-success {
-            background: rgba(70, 211, 105, 0.2);
-            color: #46d369;
-            border: 1px solid rgba(70, 211, 105, 0.3);
-        }
-
-        .messages .alert-error {
-            background: rgba(232, 124, 3, 0.2);
-            color: #e87c03;
-            border: 1px solid rgba(232, 124, 3, 0.3);
-        }
-
-        .helptext {
-            display: block;
-            font-size: 0.75rem;
-            color: #737373;
-            margin-top: 0.25rem;
-            line-height: 1.3;
-        }
-
-        /* Footer */
-        .auth-footer {
-            background: #000;
-            padding: 2rem 0;
-            border-top: 1px solid #333;
-            margin-top: 4rem;
-        }
-
-        .footer-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 50px;
+        .payment-hint {
             text-align: center;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .footer-links a {
-            color: #737373;
-            text-decoration: none;
-            font-size: 0.875rem;
-            transition: color 0.2s;
-        }
-
-        .footer-links a:hover {
-            color: #fff;
-        }
-
-        .footer-bottom {
-            color: #737373;
-            font-size: 0.875rem;
-            line-height: 1.5;
-        }
-
-        .footer-disclaimer {
-            margin-top: 1rem;
-            font-size: 0.75rem;
+            margin-top: 32px;
+            font-size: 12px;
             color: #666;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-            .register-content {
-                grid-template-columns: 1fr;
-                gap: 40px;
-                text-align: center;
-            }
-
-            .hero-text {
-                max-width: 100%;
-            }
-
-            .register-form-container {
-                max-width: 400px;
-                margin: 0 auto;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .register-navbar {
-                padding: 20px 30px;
-            }
-
-            .register-logo {
-                font-size: 2rem;
-            }
-
-            .register-content {
-                padding: 0 30px;
-            }
-
-            .hero-headline {
-                font-size: 2.5rem;
-            }
-
-            .hero-subtext {
-                font-size: 1.25rem;
-            }
-
-            .register-form-container {
-                padding: 40px 30px;
-            }
-
-            .footer-container {
-                padding: 0 30px;
-            }
-
-            .footer-links {
-                gap: 1rem;
-            }
+            line-height: 1.4;
         }
 
         @media (max-width: 480px) {
-            .register-navbar {
-                padding: 15px 20px;
-            }
-
-            .register-logo {
-                font-size: 1.75rem;
-            }
-
-            .register-content {
-                padding: 0 20px;
-            }
-
-            .hero-headline {
-                font-size: 2rem;
-            }
-
-            .hero-subtext {
-                font-size: 1.125rem;
-            }
-
-            .register-form-container {
-                padding: 30px 20px;
-            }
-
-            .footer-container {
-                padding: 0 20px;
-            }
-
-            .footer-links {
-                flex-direction: column;
-                gap: 0.5rem;
+            .signup-card {
+                padding: 32px 24px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="register-hero">
-        <!-- Navigation -->
-        <nav class="register-navbar">
-            <a href="/" class="register-logo">JETFLIX</a>
-        </nav>
+    <div class="bg-image"></div>
+    <div class="bg-overlay"></div>
+    
+    <div class="signup-container">
+        <div class="signup-card">
+            <h1 class="card-title">Create Account</h1>
+            <p class="card-subtitle">Join Jetflix and start watching</p>
 
-        <!-- Main Content -->
-        <div class="register-content">
-            <!-- Hero Text Section -->
-            <div class="hero-text">
-                <h1 class="hero-headline">Ready to watch?<br>Create your account.</h1>
-                <p class="hero-subtext">Join thousands of users enjoying premium content with secure payment.</p>
-                
-                <ul class="hero-features">
-                    <li>Instant access after payment</li>
-                    <li>High-quality streaming</li>
-                    <li>Secure eSewa integration</li>
-                </ul>
-
-                <div class="trust-signals">
-                    <p><strong>Secure & Private</strong></p>
-                    <p>Your data is protected with industry-standard encryption</p>
-                    <p>One-time payment, lifetime access</p>
-                    
-                    <div class="trust-badges">
-                        <span class="trust-badge">SSL Secured</span>
-                        <span class="trust-badge">Privacy Protected</span>
-                        <span class="trust-badge">eSewa Verified</span>
-                    </div>
+            {% if form.non_field_errors %}
+                <div class="error-message">
+                    {{ form.non_field_errors }}
                 </div>
-            </div>
+            {% endif %}
 
-            <!-- Register Form -->
-            <div class="register-form-container">
-                <h2 class="form-title">Create Account</h2>
+            <form method="post">
+                {% csrf_token %}
                 
-                <!-- Messages -->
-                {% if messages %}
-                    <div class="messages">
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+                <div class="form-group">
+                    <input 
+                        type="email" 
+                        name="email" 
+                        class="form-input {% if form.email.errors %}error{% endif %}" 
+                        placeholder="Email"
+                        value="{{ form.email.value|default:'' }}"
+                        required
+                        autofocus
+                    >
+                    {% if form.email.errors %}
+                        <div class="field-error">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
 
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <!-- Username Field -->
-                    <div class="form-group">
-                        <input 
-                            type="text" 
-                            name="username" 
-                            placeholder="Username" 
-                            required
-                            {% if form.username.errors %}class="error"{% endif %}
-                        >
-                        {% if form.username.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.username.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        {% if form.username.help_text %}
-                            <span class="helptext">{{ form.username.help_text }}</span>
-                        {% endif %}
-                    </div>
+                <div class="form-group">
+                    <input 
+                        type="text" 
+                        name="username" 
+                        class="form-input {% if form.username.errors %}error{% endif %}" 
+                        placeholder="Username"
+                        value="{{ form.username.value|default:'' }}"
+                        required
+                    >
+                    {% if form.username.errors %}
+                        <div class="field-error">{{ form.username.errors.0 }}</div>
+                    {% endif %}
+                </div>
 
-                    <!-- Email Field -->
-                    <div class="form-group">
-                        <input 
-                            type="email" 
-                            name="email" 
-                            placeholder="Email address" 
-                            required
-                            {% if form.email.errors %}class="error"{% endif %}
-                        >
-                        {% if form.email.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.email.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-
-                    <!-- Password Field -->
-                    <div class="form-group">
+                <div class="form-group">
+                    <div class="password-wrapper">
                         <input 
                             type="password" 
                             name="password1" 
-                            placeholder="Password" 
+                            class="form-input {% if form.password1.errors %}error{% endif %}" 
+                            placeholder="Password"
+                            id="password1"
                             required
-                            {% if form.password1.errors %}class="error"{% endif %}
                         >
-                        {% if form.password1.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.password1.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                        {% if form.password1.help_text %}
-                            <span class="helptext">{{ form.password1.help_text }}</span>
-                        {% endif %}
+                        <button type="button" class="password-toggle" id="passwordToggle1">SHOW</button>
                     </div>
+                    {% if form.password1.errors %}
+                        <div class="field-error">{{ form.password1.errors.0 }}</div>
+                    {% endif %}
+                </div>
 
-                    <!-- Confirm Password Field -->
-                    <div class="form-group">
+                <div class="form-group">
+                    <div class="password-wrapper">
                         <input 
                             type="password" 
                             name="password2" 
-                            placeholder="Confirm password" 
+                            class="form-input {% if form.password2.errors %}error{% endif %}" 
+                            placeholder="Confirm Password"
+                            id="password2"
                             required
-                            {% if form.password2.errors %}class="error"{% endif %}
                         >
-                        {% if form.password2.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.password2.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
+                        <button type="button" class="password-toggle" id="passwordToggle2">SHOW</button>
                     </div>
-
-                    <button type="submit" class="form-submit">Continue to Payment</button>
-                </form>
-
-                <div class="form-toggle">
-                    Already have an account? <a href="/">Sign in</a>.
+                    {% if form.password2.errors %}
+                        <div class="field-error">{{ form.password2.errors.0 }}</div>
+                    {% endif %}
                 </div>
+
+                <button type="submit" class="primary-btn">Create Account</button>
+            </form>
+
+            <div class="secondary-action">
+                Already have an account? <a href="{% url 'login' %}">Sign in</a>
+            </div>
+
+            <div class="payment-hint">
+                You'll be redirected to secure payment after creating your account.
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="auth-footer">
-        <div class="footer-container">
-            <div class="footer-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">Contact</a>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Jetflix. All rights reserved.</p>
-                <div class="footer-disclaimer">
-                    Payments are securely processed via eSewa.
-                </div>
-            </div>
-        </div>
-    </footer>
+    <script>
+        function setupPasswordToggle(inputId, toggleId) {
+            const input = document.getElementById(inputId);
+            const toggle = document.getElementById(toggleId);
+            
+            toggle.addEventListener('click', () => {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    toggle.textContent = 'HIDE';
+                } else {
+                    input.type = 'password';
+                    toggle.textContent = 'SHOW';
+                }
+            });
+        }
+
+        setupPasswordToggle('password1', 'passwordToggle1');
+        setupPasswordToggle('password2', 'passwordToggle2');
+    </script>
 </body>
 </html>

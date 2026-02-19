@@ -28,6 +28,7 @@ class Genre(models.Model):
         return self.name
 
 class Movie(models.Model):
+    id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=255)
     year = models.IntegerField()
     description = models.TextField()
@@ -88,13 +89,13 @@ class Movie(models.Model):
                 is_published=True
             ).order_by('-review_stars', '-views')[:limit]
         
-        # Find similar users based on common movie interactions
+        # Find similar users based on common movie interactions (lowered threshold to 1)
         similar_users = User.objects.filter(
             interactions__movie_id__in=user_movies
         ).exclude(id=user.id).annotate(
             common_movies=Count('interactions__movie_id', 
                               filter=Q(interactions__movie_id__in=user_movies))
-        ).filter(common_movies__gte=2).order_by('-common_movies')[:10]
+        ).filter(common_movies__gte=1).order_by('-common_movies')[:20]
         
         if not similar_users:
             # Fallback to genre-based recommendations
@@ -105,7 +106,7 @@ class Movie(models.Model):
             return cls.objects.filter(
                 genres__in=user_genres,
                 is_published=True
-            ).exclude(id__in=user_movies).distinct().order_by('-review_stars')[:limit]
+            ).exclude(id__in=user_movies).distinct().order_by('-review_stars', '-views')[:limit]
         
         # Get movies liked by similar users
         recommended_movies = cls.objects.filter(
@@ -113,7 +114,22 @@ class Movie(models.Model):
             is_published=True
         ).exclude(id__in=user_movies).annotate(
             recommendation_score=Count('interactions__user', distinct=True)
-        ).order_by('-recommendation_score', '-review_stars')[:limit]
+        ).order_by('-recommendation_score', '-review_stars', '-views')[:limit]
+        
+        # If not enough recommendations, add genre-based ones
+        if recommended_movies.count() < limit:
+            user_genres = cls.objects.filter(
+                id__in=user_movies
+            ).values_list('genres', flat=True)
+            
+            genre_based = cls.objects.filter(
+                genres__in=user_genres,
+                is_published=True
+            ).exclude(id__in=user_movies).exclude(
+                id__in=[m.id for m in recommended_movies]
+            ).distinct().order_by('-review_stars', '-views')[:limit - recommended_movies.count()]
+            
+            recommended_movies = list(recommended_movies) + list(genre_based)
         
         return recommended_movies
 

@@ -450,6 +450,27 @@ form + p a:hover {
 }
 
 /* Enhanced Video Player Modal */
+.jetflix-player.theater-mode {
+  padding: 0;
+}
+
+.jetflix-player.theater-mode .player-container {
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+.jetflix-player.theater-mode .video-wrapper {
+  max-height: 85vh;
+  width: 100%;
+}
+
+.jetflix-player.theater-mode .jetflix-video {
+  width: 100%;
+  height: auto;
+  max-height: 85vh;
+  object-fit: contain;
+}
+
 .jetflix-player {
   position: fixed;
   top: 0;
@@ -483,12 +504,13 @@ form + p a:hover {
   right: 0;
   background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
   padding: 20px 30px;
-  z-index: 10;
+  z-index: 100;
   display: flex;
   justify-content: space-between;
   align-items: center;
   opacity: 1;
   transition: opacity 0.3s ease;
+  pointer-events: auto;
 }
 
 .player-header.hidden {
@@ -539,6 +561,9 @@ form + p a:hover {
   height: 100%;
   object-fit: contain;
   outline: none;
+  z-index: 2;
+  position: relative;
+  pointer-events: auto;
 }
 
 .custom-controls {
@@ -550,6 +575,8 @@ form + p a:hover {
   padding: 30px;
   opacity: 1;
   transition: opacity 0.3s ease;
+  z-index: 100;
+  pointer-events: auto;
 }
 
 .custom-controls.hidden {
@@ -823,7 +850,8 @@ form + p a:hover {
   bottom: 0;
   background: transparent;
   cursor: pointer;
-  z-index: 5;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .center-play-btn {
@@ -844,6 +872,8 @@ form + p a:hover {
   justify-content: center;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  z-index: 50;
+  pointer-events: auto;
 }
 
 .center-play-btn:hover {

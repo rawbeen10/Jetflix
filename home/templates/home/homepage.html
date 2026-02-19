@@ -1399,13 +1399,22 @@
         return;
       }
 
-      if (currentMovieId) {
+      const movie = movies.find(m => m.id === currentMovieId) || 
+                    trendingMovies.find(m => m.id === currentMovieId) || 
+                    recommendedMovies.find(m => m.id === currentMovieId);
+      
+      if (movie && movie.video) {
         // Increment view count before playing
         incrementViewCount(currentMovieId);
-        // Redirect to the enhanced video player
-        window.location.href = `/movies/player/${currentMovieId}/`;
+        // Use the enhanced JetFlix player from base.html
+        if (typeof openJetflixPlayer === 'function') {
+          openJetflixPlayer(movie.video, movie.title);
+          closeModal();
+        } else {
+          showNotification('Video player not available', 'error');
+        }
       } else {
-        showNotification('Movie not available', 'error');
+        showNotification('Video not available', 'error');
       }
     }
 

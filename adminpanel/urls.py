@@ -18,4 +18,5 @@ urlpatterns = [
     path('reviews/delete/<int:review_id>/', views.delete_review_admin, name='delete_review_admin'),
     path('users/', views.manage_users, name='manage_users'),
     path('users/<int:user_id>/', views.user_profile, name='user_profile'),
+    path('payments/', views.manage_payments, name='manage_payments'),
 ]
