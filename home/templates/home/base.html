@@ -1174,24 +1174,24 @@
         // ── Progress / Seek ───────────────────────────────────────────────────
         this.progressBar.addEventListener('click', (e) => {
           e.preventDefault(); e.stopPropagation();
-          const wasPlaying = !this.video.paused;
-          this.seek(e);
-          if (wasPlaying) setTimeout(() => this.video.play(), 50);
+          if (!this.isDragging) this.seek(e);
         });
         this.progressBar.addEventListener('mousedown', (e) => {
           e.preventDefault(); e.stopPropagation();
           this.isDragging = true;
           this.wasPlayingBeforeDrag = !this.video.paused;
+          if (this.wasPlayingBeforeDrag) this.video.pause();
           this.seek(e);
         });
-        document.addEventListener('mouseup', () => {
-          if (this.isDragging && this.wasPlayingBeforeDrag) {
-            setTimeout(() => this.video.play(), 50);
-          }
-          this.isDragging = false;
+        document.addEventListener('mousemove', (e) => {
+          if (this.isDragging) { e.preventDefault(); this.seek(e); }
         });
-        this.progressBar.addEventListener('mousemove', (e) => {
-          if (this.isDragging) { e.preventDefault(); e.stopPropagation(); this.seek(e); }
+        document.addEventListener('mouseup', (e) => {
+          if (this.isDragging) {
+            this.seek(e);
+            if (this.wasPlayingBeforeDrag) this.video.play();
+            this.isDragging = false;
+          }
         });
 
         // ── Volume ────────────────────────────────────────────────────────────
@@ -1362,31 +1362,40 @@
       seek(e) {
         if (!this.video.duration || isNaN(this.video.duration)) return;
         e.stopPropagation();
-        const rect   = this.progressBar.getBoundingClientRect();
-        const pos    = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const rect    = this.progressBar.getBoundingClientRect();
+        const pos     = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         const newTime = pos * this.video.duration;
         if (!isNaN(newTime) && isFinite(newTime)) {
-          this.video.currentTime = newTime;
+          if (this.video.fastSeek) {
+            this.video.fastSeek(newTime);
+          } else {
+            this.video.currentTime = newTime;
+          }
+          this.progressFilled.style.width = (pos * 100) + '%';
         }
       }
       
       // ─── REWIND / FORWARD ────────────────────────────────────────────────────
       rewind() {
-        console.log('Rewind method called, current time:', this.video.currentTime);
-        const newTime = Math.max(0, this.video.currentTime - 10);
-        this.video.currentTime = newTime;
-        console.log('New time after rewind:', newTime);
-        this.showIndicator('⏪ -10s');
+        const newTime = Math.max(0, this.video.currentTime - 5);
+        if (this.video.fastSeek) {
+          this.video.fastSeek(newTime);
+        } else {
+          this.video.currentTime = newTime;
+        }
+        this.showIndicator('⏪ -5s');
       }
       
       forward() {
-        console.log('Forward method called, current time:', this.video.currentTime);
         if (!isNaN(this.video.duration)) {
-          const newTime = Math.min(this.video.duration, this.video.currentTime + 10);
-          this.video.currentTime = newTime;
-          console.log('New time after forward:', newTime);
+          const newTime = Math.min(this.video.duration, this.video.currentTime + 5);
+          if (this.video.fastSeek) {
+            this.video.fastSeek(newTime);
+          } else {
+            this.video.currentTime = newTime;
+          }
         }
-        this.showIndicator('⏩ +10s');
+        this.showIndicator('⏩ +5s');
       }
       
       // ─── VOLUME ──────────────────────────────────────────────────────────────

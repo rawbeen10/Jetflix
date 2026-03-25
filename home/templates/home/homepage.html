@@ -167,6 +167,29 @@
       margin-top: 5px;
     }
 
+    .remove-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(0,0,0,0.8);
+      border: 2px solid rgba(255,255,255,0.5);
+      color: #fff;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 5;
+      font-size: 14px;
+    }
+    .remove-btn.in-watchlist { display: flex; }
+    .movie-card:hover .remove-btn.in-watchlist { opacity: 1; }
+    .remove-btn:hover { background-color: #e50914; border-color: #e50914; transform: scale(1.1); }
+
     /* Empty State Styles */
     .empty-state {
       width: 100%;
@@ -1039,7 +1062,8 @@
       <div class="movies" id="recent-movies">
         {% if movies %}
           {% for movie in movies %}
-            <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, false, false)">
+            <div class="movie-card" data-movie-id="{{ movie.id }}" onclick="openModal({{ forloop.counter0 }}, false, false)">
+              <button class="remove-btn" onclick="event.stopPropagation(); removeFromWatchlist({{ movie.id }})" title="Remove from watchlist">✕</button>
               {% if movie.thumbnail %}
                 <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
               {% else %}
@@ -1068,7 +1092,8 @@
       <div class="movies" id="trending-movies">
         {% if trending_movies %}
           {% for movie in trending_movies %}
-            <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, true, false)">
+            <div class="movie-card" data-movie-id="{{ movie.id }}" onclick="openModal({{ forloop.counter0 }}, true, false)">
+              <button class="remove-btn" onclick="event.stopPropagation(); removeFromWatchlist({{ movie.id }})" title="Remove from watchlist">✕</button>
               {% if movie.thumbnail %}
                 <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
               {% else %}
@@ -1111,7 +1136,8 @@
             </div>
           {% elif recommended_movies %}
             {% for movie in recommended_movies %}
-              <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, false, true)">
+              <div class="movie-card" data-movie-id="{{ movie.id }}" onclick="openModal({{ forloop.counter0 }}, false, true)">
+                <button class="remove-btn" onclick="event.stopPropagation(); removeFromWatchlist({{ movie.id }})" title="Remove from watchlist">✕</button>
                 {% if movie.thumbnail %}
                   <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
                 {% else %}
@@ -1166,7 +1192,8 @@
         {% if user.is_authenticated %}
           {% if recommended_movies %}
             {% for movie in movies|slice:":6" %}
-              <div class="movie-card" onclick="openModal({{ forloop.counter0 }}, false, false)">
+              <div class="movie-card" data-movie-id="{{ movie.id }}" onclick="openModal({{ forloop.counter0 }}, false, false)">
+                <button class="remove-btn" onclick="event.stopPropagation(); removeFromWatchlist({{ movie.id }})" title="Remove from watchlist">✕</button>
                 {% if movie.thumbnail %}
                   <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
                 {% else %}
@@ -1564,6 +1591,14 @@
       btn.style.backgroundColor = inList ? 'rgba(229,9,20,0.7)' : '';
     }
 
+    function syncCardButtons() {
+      document.querySelectorAll('.movie-card[data-movie-id]').forEach(card => {
+        const id = parseInt(card.dataset.movieId);
+        const btn = card.querySelector('.remove-btn');
+        if (btn) btn.classList.toggle('in-watchlist', userWatchlistIds.includes(id));
+      });
+    }
+
     function toggleWatchlist() {
       if (!isAuthenticated) {
         closeModal();
@@ -1596,6 +1631,7 @@
             if (!userWatchlistIds.includes(currentMovieId)) userWatchlistIds.push(currentMovieId);
           }
           updateWatchlistBtn(currentMovieId);
+          syncCardButtons();
         } else {
           showNotification('Error: ' + data.message, 'error');
         }
@@ -1615,6 +1651,7 @@
           showNotification('Removed from watchlist', 'success');
           userWatchlistIds = userWatchlistIds.filter(id => id !== movieId);
           updateWatchlistBtn(movieId);
+          syncCardButtons();
         } else {
           showNotification('Error removing movie', 'error');
         }
@@ -1910,22 +1947,21 @@
     });
 
     window.addEventListener('DOMContentLoaded', () => {
+      syncCardButtons();
+
       if (isAuthenticated) {
         const movieToWatch = sessionStorage.getItem('movieToWatch');
         if (movieToWatch) {
           sessionStorage.removeItem('movieToWatch');
           
-          // Try to find in recently added movies first
           let index = movies.findIndex(m => m.id == movieToWatch);
           if (index !== -1) {
             openModal(index, false, false);
           } else {
-            // Try trending movies
             index = trendingMovies.findIndex(m => m.id == movieToWatch);
             if (index !== -1) {
               openModal(index, true, false);
             } else {
-              // Try recommended movies
               index = recommendedMovies.findIndex(m => m.id == movieToWatch);
               if (index !== -1) {
                 openModal(index, false, true);

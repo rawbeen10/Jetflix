@@ -208,6 +208,29 @@
     margin-top: 5px;
   }
 
+  .remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0,0,0,0.8);
+    border: 2px solid rgba(255,255,255,0.5);
+    color: #fff;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 5;
+    font-size: 14px;
+  }
+  .remove-btn.in-watchlist { display: flex; }
+  .movie-card:hover .remove-btn.in-watchlist { opacity: 1; }
+  .remove-btn:hover { background-color: #e50914; border-color: #e50914; transform: scale(1.1); }
+
   /* Notification */
   /* Toast Notification */
   .toast {
@@ -934,7 +957,8 @@
         <div class="movies" id="genre-{{ forloop.counter0 }}">
           {% for movie in movies %}
             {% if genre.name in movie.get_genres_display %}
-            <div class="movie-card" onclick="openModal({{ forloop.counter0 }})">
+            <div class="movie-card" data-movie-id="{{ movie.id }}" onclick="openModal({{ forloop.counter0 }})">
+              <button class="remove-btn" onclick="event.stopPropagation(); removeFromWatchlist({{ movie.id }})" title="Remove from watchlist">✕</button>
               {% if movie.thumbnail %}
                 <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
               {% else %}
@@ -963,7 +987,8 @@
         <div class="movies" id="lang-{{ forloop.counter0 }}">
           {% for movie in movies %}
             {% if movie.language.name == language.name %}
-            <div class="movie-card" onclick="openModal({{ forloop.counter0 }})">
+            <div class="movie-card" data-movie-id="{{ movie.id }}" onclick="openModal({{ forloop.counter0 }})">
+              <button class="remove-btn" onclick="event.stopPropagation(); removeFromWatchlist({{ movie.id }})" title="Remove from watchlist">✕</button>
               {% if movie.thumbnail %}
                 <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
               {% else %}
@@ -1283,6 +1308,14 @@
     return views + ' views';
   }
 
+  function syncCardButtons() {
+    document.querySelectorAll('.movie-card[data-movie-id]').forEach(card => {
+      const id = parseInt(card.dataset.movieId);
+      const btn = card.querySelector('.remove-btn');
+      if (btn) btn.classList.toggle('in-watchlist', userWatchlistIds.includes(id));
+    });
+  }
+
   function updateWatchlistBtn(movieId) {
     const inList = userWatchlistIds.includes(movieId);
     document.getElementById('watchlistBtnIcon').textContent = inList ? '✕' : '+';
@@ -1323,6 +1356,7 @@
           if (!userWatchlistIds.includes(currentMovieId)) userWatchlistIds.push(currentMovieId);
         }
         updateWatchlistBtn(currentMovieId);
+        syncCardButtons();
       } else {
         showNotification('Error: ' + data.message, 'error');
       }
@@ -1342,6 +1376,7 @@
         showNotification('Removed from watchlist', 'success');
         userWatchlistIds = userWatchlistIds.filter(id => id !== movieId);
         updateWatchlistBtn(movieId);
+        syncCardButtons();
       } else {
         showNotification('Error removing movie', 'error');
       }
@@ -1590,6 +1625,8 @@
 
   // Check if user just logged in and wanted to watch a movie
   window.addEventListener('DOMContentLoaded', () => {
+    syncCardButtons();
+
     if (isAuthenticated) {
       const movieToWatch = sessionStorage.getItem('movieToWatch');
       if (movieToWatch) {
