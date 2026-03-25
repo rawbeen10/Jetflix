@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.admin.views.decorators import staff_member_required
@@ -197,3 +197,8 @@ def manage_payments(request):
         'pending_payments': pending_payments,
         'failed_payments': failed_payments
     })
+
+
+def admin_logout(request):
+    logout(request)
+    return redirect('admin_login')

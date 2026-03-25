@@ -19,4 +19,5 @@ urlpatterns = [
     path('users/', views.manage_users, name='manage_users'),
     path('users/<int:user_id>/', views.user_profile, name='user_profile'),
     path('payments/', views.manage_payments, name='manage_payments'),
+    path('logout/', views.admin_logout, name='admin_logout'),
 ]

@@ -45,6 +45,9 @@ body {
     text-align: center;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
+    text-decoration: none;
+    display: block;
+    color: inherit;
 }
 
 /* Card hover effect */
@@ -84,30 +87,30 @@ body {
     <h1>Admin Dashboard</h1>
 
     <div class="cards">
-      <div class="card">
+      <a href="{% url 'admin-all-movies' %}" class="card">
         <h3>Total Movies</h3>
         <p>{{ total_movies }}</p>
-      </div>
+      </a>
 
-      <div class="card">
+      <a href="{% url 'manage_users' %}" class="card">
         <h3>Total Users</h3>
         <p>{{ total_users }}</p>
-      </div>
+      </a>
 
-      <div class="card">
+      <a href="{% url 'admin-all-movies' %}" class="card">
         <h3>Published Movies</h3>
         <p>{{ published_movies }}</p>
-      </div>
+      </a>
       
-      <div class="card">
+      <a href="{% url 'manage_reviews' %}" class="card">
         <h3>Total Reviews</h3>
         <p>{{ total_reviews }}</p>
-      </div>
+      </a>
       
-      <div class="card">
+      <a href="{% url 'admin-all-movies' %}" class="card">
         <h3>Total Views</h3>
         <p>{{ total_views }}</p>
-      </div>
+      </a>
     </div>
   </div>
 
