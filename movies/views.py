@@ -115,7 +115,6 @@ def add_to_watchlist(request):
         )
         
         if created:
-            # Track interaction for recommendations
             UserInteraction.objects.get_or_create(
                 user=request.user,
                 movie=movie,
@@ -125,20 +124,44 @@ def add_to_watchlist(request):
             
             return JsonResponse({
                 'status': 'success',
-                'message': 'Added to watchlist',
                 'action': 'added'
             })
         else:
             return JsonResponse({
                 'status': 'success',
-                'message': 'Already in watchlist',
-                'action': 'exists'
+                'action': 'already_exists'
             })
     except Movie.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Movie not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@login_required
+def get_watchlist(request):
+    """API endpoint to get user's watchlist"""
+    try:
+        watchlist_items = Watchlist.objects.filter(user=request.user).select_related('movie').prefetch_related('movie__genres', 'movie__language')
+        
+        movies_data = [{
+            'id': item.movie.id,
+            'title': item.movie.title,
+            'year': item.movie.year,
+            'description': item.movie.description or '',
+            'thumbnail': item.movie.thumbnail.url if item.movie.thumbnail else '',
+            'video': item.movie.video.url if item.movie.video else '',
+            'genres': item.movie.get_genres_display(),
+            'language': item.movie.language.name if item.movie.language else 'Unknown',
+            'cast': item.movie.cast or '',
+            'length': item.movie.movie_length or 'Unknown',
+            'rating': float(item.movie.review_stars),
+            'views': item.movie.views
+        } for item in watchlist_items]
+        
         return JsonResponse({
-            'status': 'error',
-            'message': 'Movie not found'
-        }, status=404)
+            'status': 'success',
+            'movies': movies_data,
+            'count': len(movies_data)
+        })
     except Exception as e:
         return JsonResponse({
             'status': 'error',
@@ -156,13 +179,18 @@ def remove_from_watchlist(request):
         
         return JsonResponse({
             'status': 'success',
-            'message': 'Removed from watchlist'
+            'action': 'removed'
         })
     except Exception as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        }, status=400)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@login_required
+def check_watchlist_status(request, movie_id):
+    try:
+        in_watchlist = Watchlist.objects.filter(user=request.user, movie_id=movie_id).exists()
+        return JsonResponse({'in_watchlist': in_watchlist})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     
 from movies.models import WatchHistory
 

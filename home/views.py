@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from .forms import CustomUserCreationForm
 from .models import Payment
-from movies.models import Movie, WatchHistory, UserInteraction
+from movies.models import Movie, Watchlist, WatchHistory, UserInteraction
 import logging
 import uuid
 import hashlib
@@ -141,7 +141,12 @@ def search_view(request):
 @login_required(login_url='/')
 def watchlist_view(request):
     try:
-        return render(request, 'home/watchlist.html')
+        watchlist_items = Watchlist.objects.filter(user=request.user).select_related('movie').prefetch_related('movie__genres', 'movie__language')
+        movies = [item.movie for item in watchlist_items]
+        return render(request, 'home/watchlist.html', {
+            'movies': movies,
+            'watchlist_count': len(movies)
+        })
     except Exception as e:
         logger.error(f"Error in watchlist_view: {str(e)}")
         messages.error(request, "Unable to load watchlist.")
@@ -268,11 +273,16 @@ def home_page(request):
 
 def homepage_view(request):
     try:
-        return render(request, 'home/homepage.html')
+        user_watchlist_ids = []
+        if request.user.is_authenticated:
+            user_watchlist_ids = list(
+                Watchlist.objects.filter(user=request.user).values_list('movie_id', flat=True)
+            )
+        return render(request, 'home/homepage.html', {'user_watchlist_ids': user_watchlist_ids})
     except Exception as e:
         logger.error(f"Error in homepage_view: {str(e)}")
         messages.error(request, "Unable to load homepage.")
-        return render(request, 'home/homepage.html')
+        return render(request, 'home/homepage.html', {'user_watchlist_ids': []})
 
 
 

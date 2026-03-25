@@ -1,0 +1,142 @@
+Jetflix/
+|-- adminpanel/
+|   |-- migrations/
+|   |   |-- __init__.py
+|   |   |-- 0001_initial.py
+|   |   `-- 0002_movie_cast_movie_genre_movie_movie_length_and_more.py
+|   |-- templates/
+|   |   `-- adminpanel/
+|   |       |-- add_movie.html
+|   |       |-- all_movies.html
+|   |       |-- base.html
+|   |       |-- dashboard.html
+|   |       |-- edit_movie.html
+|   |       |-- login.html
+|   |       |-- manage_payments.html
+|   |       |-- manage_reviews.html
+|   |       |-- manage_users.html
+|   |       `-- user_profile.html
+|   |-- __init__.py
+|   |-- admin.py
+|   |-- apps.py
+|   |-- forms.py
+|   |-- models.py
+|   |-- tests.py
+|   |-- urls.py
+|   `-- views.py
+|-- home/
+|   |-- migrations/
+|   |   |-- __init__.py
+|   |   |-- 0001_initial.py
+|   |   `-- 0002_alter_payment_id_successfulpayment.py
+|   |-- static/
+|   |   `-- home/
+|   |       |-- auth.css
+|   |       |-- auth.js
+|   |       `-- style.css
+|   |-- templates/
+|   |   `-- home/
+|   |       |-- auth.html
+|   |       |-- base.html
+|   |       |-- edit_profile.html
+|   |       |-- homepage.html
+|   |       |-- login.html
+|   |       |-- payment_redirect.html
+|   |       |-- payment.html
+|   |       |-- profile.html
+|   |       |-- register.html
+|   |       |-- search.html
+|   |       |-- watch_history.html
+|   |       `-- watchlist.html
+|   |-- __init__.py
+|   |-- admin.py
+|   |-- apps.py
+|   |-- context_processors.py
+|   |-- forms.py
+|   |-- middleware.py
+|   |-- models.py
+|   |-- tests.py
+|   |-- urls.py
+|   `-- views.py
+|-- Jetflix/
+|   |-- __init__.py
+|   |-- asgi.py
+|   |-- settings.py
+|   |-- urls.py
+|   `-- wsgi.py
+|-- media/
+|   |-- movies/
+|   |   |-- meme_K0VA74V.mp4
+|   |   |-- meme_kXGBYmi.mp4
+|   |   |-- meme_mvWZ7mr.mp4
+|   |   |-- meme_vbVHcup.mp4
+|   |   |-- meme.mp4
+|   |   |-- movie_ECo1OjT.mp4
+|   |   |-- movie_lXe0NhS.mp4
+|   |   |-- movie.mp4
+|   |   |-- Screen_Recording_2025-04-28_150521.mp4
+|   |   `-- Screen_Recording_2025-05-08_101737.mp4
+|   `-- thumbnails/
+|       |-- Avengers_Infinity_War_poster.jpg
+|       |-- dreams.jpg
+|       |-- jatro.jpg
+|       |-- karmayoddha.webp
+|       |-- lalaland.avif
+|       |-- lighthouse.jpg
+|       |-- love_exposure.jpg
+|       |-- murder.jpg
+|       |-- MV5BYWIxYzViNTItMmU1Ni00ODQwLWJlZDItOWQ4OWVmNDMxMGE2XkEyXkFqcGc._V1_.jpg
+|       |-- MV5BZTMwNTEwMmQtOGEyMS00M2FiLWI2YzAtZWQ3NDRhMDY1MjhkXkEyXkFqcGc._V1_.jpg
+|       |-- ok_RRS4Y2Q.jpg
+|       |-- ok.jpg
+|       `-- Taxi_Driver_1976_film_poster.jpg
+|-- movies/
+|   |-- management/
+|   |   |-- commands/
+|   |   |   |-- __init__.py
+|   |   |   `-- populate_interactions.py
+|   |   `-- __init__.py
+|   |-- migrations/
+|   |   |-- __init__.py
+|   |   |-- 0001_initial.py
+|   |   |-- 0002_watchlist.py
+|   |   |-- 0003_review.py
+|   |   |-- 0004_genre_language_remove_movie_genre_movie_genres_and_more.py
+|   |   |-- 0005_watchhistory.py
+|   |   |-- 0006_alter_watchhistory_unique_together_userinteraction.py
+|   |   `-- 0007_alter_movie_id.py
+|   |-- static/
+|   |   `-- movies/
+|   |       |-- player.css
+|   |       `-- player.js
+|   |-- templates/
+|   |   `-- movies/
+|   |       |-- landing.html
+|   |       |-- player_demo.html
+|   |       |-- player.html
+|   |       |-- trending.html
+|   |       `-- watchlist.html
+|   |-- __init__.py
+|   |-- admin.py
+|   |-- apps.py
+|   |-- models.py
+|   |-- tests.py
+|   |-- urls.py
+|   `-- views.py
+|-- .gitignore
+|-- AUTH_UI_DOCUMENTATION.md
+|-- check_interactions.py
+|-- db.sqlite3
+|-- folders.txt
+|-- manage.py
+|-- parseanime.py
+|-- PAYMENT_INTEGRATION.md
+|-- README_IMPLEMENTATION.md
+|-- RECOMMENDATION_FIX.md
+|-- test_flow.py
+|-- test_payment.py
+|-- test_recommendations.py
+|-- test_reviews.py
+|-- VIDEO_PLAYER_FIXES.md
+|-- WATCHLIST_COMPLETE_GUIDE.md
+`-- WATCHLIST_IMPLEMENTATION.md

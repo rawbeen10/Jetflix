@@ -6,15 +6,18 @@
 {% block content %}
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  
+
   body {
-    background-color: #141414;
-    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    background-color: #0f0f0f;
+    color: #ffffff;
   }
 
+  .section { padding: 40px 60px; }
+  .section h2 { font-size: 26px; margin-bottom: 20px; }
+
   .watchlist-header {
-    padding: 60px 60px 30px;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    padding: 60px 60px 10px;
   }
 
   .watchlist-header h1 {
@@ -28,18 +31,47 @@
     color: #b3b3b3;
   }
 
-  .section {
-    padding: 20px 60px 40px;
-  }
-
   /* Movie Grid */
   .movies {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    display: flex;
+    overflow-x: auto;
     gap: 15px;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
-  /* Movie Card */
+  .movies::-webkit-scrollbar { display: none; }
+
+  .movie-carousel { position: relative; }
+
+  .carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    color: #fff;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    z-index: 10;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .carousel-btn:hover {
+    background: rgba(229, 9, 20, 0.8);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .carousel-btn.prev { left: -25px; }
+  .carousel-btn.next { right: -25px; }
+
   .movie-card {
     position: relative;
     border-radius: 8px;
@@ -48,6 +80,9 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background-color: #1a1a1a;
     aspect-ratio: 2/3;
+    width: 200px;
+    height: 300px;
+    flex-shrink: 0;
   }
 
   .movie-card img {
@@ -63,11 +98,8 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
   }
 
-  .movie-card:hover img {
-    transform: scale(1.1);
-  }
+  .movie-card:hover img { transform: scale(1.1); }
 
-  /* Card Overlay */
   .movie-card-overlay {
     position: absolute;
     bottom: 0;
@@ -79,9 +111,7 @@
     transition: opacity 0.3s ease;
   }
 
-  .movie-card:hover .movie-card-overlay {
-    opacity: 1;
-  }
+  .movie-card:hover .movie-card-overlay { opacity: 1; }
 
   .movie-card-overlay h3 {
     font-size: 16px;
@@ -90,10 +120,7 @@
     color: #fff;
   }
 
-  .movie-card-overlay p {
-    font-size: 13px;
-    color: #b3b3b3;
-  }
+  .movie-card-overlay p { font-size: 13px; color: #b3b3b3; }
 
   .movie-genre {
     display: inline-block;
@@ -121,11 +148,10 @@
     opacity: 0;
     transition: all 0.3s ease;
     z-index: 5;
+    font-size: 14px;
   }
 
-  .movie-card:hover .remove-btn {
-    opacity: 1;
-  }
+  .movie-card:hover .remove-btn { opacity: 1; }
 
   .remove-btn:hover {
     background-color: #e50914;
@@ -133,45 +159,94 @@
     transform: scale(1.1);
   }
 
+  /* Empty State */
   .empty-state {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    padding: 100px 20px;
+    padding: 60px 20px;
   }
 
-  .empty-state-icon {
-    font-size: 80px;
-    margin-bottom: 20px;
-    opacity: 0.3;
-  }
+  .empty-state svg { margin: 0 auto 20px; }
 
-  .empty-state h2 {
-    font-size: 28px;
-    margin-bottom: 15px;
-    color: #fff;
+  .empty-state h3 {
+    font-size: 24px;
+    color: #e5e5e5;
+    margin-bottom: 12px;
   }
 
   .empty-state p {
     font-size: 16px;
-    color: #b3b3b3;
-    margin-bottom: 30px;
+    color: #888;
+    margin-bottom: 24px;
   }
 
-  .btn {
-    padding: 14px 32px;
-    background-color: #fff;
-    color: #000;
-    border: none;
-    border-radius: 6px;
+  .empty-state button {
+    padding: 12px 24px;
     font-size: 16px;
     font-weight: 600;
+    background-color: #e50914;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
     cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-    transition: background-color 0.2s;
+    transition: background-color 0.3s ease;
   }
 
-  .btn:hover {
-    background-color: rgba(255, 255, 255, 0.85);
+  .empty-state button:hover { background-color: #f6121d; }
+
+  /* Notification */
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    min-width: 300px;
+    max-width: 380px;
+    background: #1e1e1e;
+    border-radius: 12px;
+    padding: 16px 18px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+    animation: toastIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+    overflow: hidden;
+  }
+  .toast.hide { animation: toastOut 0.3s ease forwards; }
+  .toast-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; flex-shrink: 0; margin-top: 1px;
+  }
+  .toast.success .toast-icon { background: rgba(74,222,128,0.15); color: #4ade80; }
+  .toast.error   .toast-icon { background: rgba(229,9,20,0.15);   color: #e50914; }
+  .toast.info    .toast-icon { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+  .toast-body { flex: 1; min-width: 0; }
+  .toast-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+  .toast-msg { font-size: 13px; color: #a0a0a0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .toast-close { background: none; border: none; color: #555; font-size: 18px; cursor: pointer; line-height: 1; padding: 0; flex-shrink: 0; transition: color 0.2s; margin-top: -1px; }
+  .toast-close:hover { color: #fff; }
+  .toast-progress { position: absolute; bottom: 0; left: 0; height: 3px; border-radius: 0 0 12px 12px; animation: toastProgress 3s linear forwards; }
+  .toast.success .toast-progress { background: #4ade80; }
+  .toast.error   .toast-progress { background: #e50914; }
+  .toast.info    .toast-progress { background: #60a5fa; }
+
+  @keyframes toastIn {
+    from { transform: translateX(calc(100% + 30px)); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes toastOut {
+    from { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(calc(100% + 30px)); opacity: 0; }
+  }
+  @keyframes toastProgress {
+    from { width: 100%; }
+    to   { width: 0%; }
   }
 
   /* Modal */
@@ -234,9 +309,7 @@
     transition: background-color 0.2s;
   }
 
-  .modal-close:hover {
-    background-color: #333;
-  }
+  .modal-close:hover { background-color: #333; }
 
   .modal-hero {
     position: relative;
@@ -255,11 +328,7 @@
     padding: 40px;
   }
 
-  .modal-title {
-    font-size: 42px;
-    font-weight: 700;
-    margin-bottom: 10px;
-  }
+  .modal-title { font-size: 42px; font-weight: 700; margin-bottom: 10px; }
 
   .modal-meta {
     display: flex;
@@ -269,14 +338,9 @@
     color: #b3b3b3;
   }
 
-  .modal-rating {
-    color: #46d369;
-    font-weight: 600;
-  }
+  .modal-rating { color: #46d369; font-weight: 600; }
 
-  .modal-body {
-    padding: 30px 40px 40px;
-  }
+  .modal-body { padding: 30px 40px 40px; }
 
   .modal-actions {
     display: flex;
@@ -300,9 +364,7 @@
     gap: 8px;
   }
 
-  .btn-primary:hover {
-    background-color: rgba(255, 255, 255, 0.85);
-  }
+  .btn-primary:hover { background-color: rgba(255, 255, 255, 0.85); }
 
   .btn-danger {
     padding: 12px 28px;
@@ -319,9 +381,7 @@
     gap: 8px;
   }
 
-  .btn-danger:hover {
-    background-color: #f6121d;
-  }
+  .btn-danger:hover { background-color: #f6121d; }
 
   .modal-description {
     font-size: 16px;
@@ -330,80 +390,298 @@
     color: #e5e5e5;
   }
 
-  .modal-info {
-    display: grid;
-    gap: 15px;
-    font-size: 14px;
+  .modal-info { display: grid; gap: 15px; font-size: 14px; }
+
+  .modal-info-row { display: flex; gap: 10px; }
+
+  .modal-info-label { color: #777; min-width: 80px; }
+
+  .modal-info-value { color: #fff; }
+
+  /* Review Section */
+  .review-section {
+    margin-top: 30px;
+    border-top: 1px solid #333;
+    padding-top: 25px;
   }
 
-  .modal-info-row {
+  .review-section h3 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #fff;
+  }
+
+  .review-input {
+    background-color: #222;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+  }
+
+  .star-rating {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+  }
+
+  .star {
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .star:hover, .star.active { color: #ffd700; }
+  .star.hover { color: #ffd700; }
+
+  #reviewText {
+    width: 100%;
+    min-height: 80px;
+    background-color: #333;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 12px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    margin-bottom: 15px;
+  }
+
+  #reviewText:focus {
+    outline: none;
+    border-color: #e50914;
+  }
+
+  .review-actions {
     display: flex;
     gap: 10px;
   }
 
-  .modal-info-label {
-    color: #777;
-    min-width: 80px;
+  .btn-review-submit {
+    padding: 10px 20px;
+    background-color: #e50914;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
   }
 
-  .modal-info-value {
+  .btn-review-submit:hover { background-color: #f6121d; }
+  .btn-review-submit:disabled { background-color: #666; cursor: not-allowed; }
+
+  .btn-review-cancel {
+    padding: 10px 20px;
+    background-color: #666;
     color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
   }
+
+  .btn-review-cancel:hover { background-color: #777; }
+
+  .reviews-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .loading-reviews {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+  }
+
+  .review-item {
+    background-color: #1a1a1a;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border-left: 3px solid #e50914;
+  }
+
+  .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .review-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .review-username {
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+
+  .review-username:hover { color: #e50914; }
+
+  .review-rating { color: #ffd700; font-size: 14px; }
+  .review-time { color: #888; font-size: 12px; }
+
+  .review-actions-btn { display: flex; gap: 8px; }
+
+  .btn-edit-review, .btn-delete-review {
+    padding: 4px 8px;
+    font-size: 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-edit-review { background-color: #0066cc; color: #fff; }
+  .btn-edit-review:hover { background-color: #0052a3; }
+  .btn-delete-review { background-color: #cc0000; color: #fff; }
+  .btn-delete-review:hover { background-color: #a30000; }
+
+  .review-text {
+    color: #e5e5e5;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+
+  .no-reviews {
+    text-align: center;
+    color: #888;
+    padding: 30px;
+    font-style: italic;
+  }
+
+  /* Recommendations Section */
+  .recommendations-section {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid #333;
+    background-color: #181818;
+  }
+
+  .recommendation-group { margin-bottom: 30px; }
+
+  .recommendation-group h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .recommendations-grid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    min-height: 200px;
+  }
+
+  .recommendations-grid::-webkit-scrollbar { height: 6px; }
+  .recommendations-grid::-webkit-scrollbar-track { background: #333; border-radius: 3px; }
+  .recommendations-grid::-webkit-scrollbar-thumb { background: #666; border-radius: 3px; }
+
+  .recommendation-card {
+    flex-shrink: 0;
+    width: 120px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    background-color: #222;
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .recommendation-card:hover {
+    transform: scale(1.05);
+    background-color: #333;
+  }
+
+  .recommendation-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+
+  .recommendation-card h4 {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .recommendation-card p {
+    font-size: 11px;
+    color: #b3b3b3;
+    margin: 0;
+  }
+
+  /* User Profile Modal */
+  .user-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #222;
+    border-radius: 8px;
+  }
+
+  .user-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #e50914;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 32px;
+    flex-shrink: 0;
+  }
+
+  .user-info h2 { margin: 0 0 8px 0; font-size: 24px; color: #fff; }
+  .user-info p { margin: 4px 0; color: #ccc; font-size: 14px; }
+
+  .user-stats { display: flex; gap: 30px; justify-content: center; }
+
+  .stat-item { text-align: center; }
+
+  .stat-number {
+    display: block;
+    font-size: 32px;
+    font-weight: bold;
+    color: #e50914;
+    margin-bottom: 8px;
+  }
+
+  .stat-label { color: #ccc; font-size: 14px; }
 
   @media (max-width: 768px) {
-    .watchlist-header {
-      padding: 40px 25px 20px;
-    }
-
-    .watchlist-header h1 {
-      font-size: 32px;
-    }
-
-    .section {
-      padding: 20px 25px;
-    }
-
-    .movies {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 10px;
-    }
-
-    .modal-hero {
-      height: 250px;
-    }
-
-    .modal-title {
-      font-size: 28px;
-    }
-
-    .modal-body {
-      padding: 20px;
-    }
-  }
-
-  .notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    padding: 16px 24px;
-    border-radius: 8px;
-    color: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    font-weight: 500;
-    animation: slideIn 0.3s ease-out;
-  }
-  .notification.info { background: #2196F3; }
-  .notification.error { background: #e50914; }
-  .notification.success { background: #4CAF50; }
-
-  @keyframes slideIn {
-    from { transform: translateX(400px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-  @keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(400px); opacity: 0; }
+    .watchlist-header { padding: 40px 25px 10px; }
+    .watchlist-header h1 { font-size: 32px; }
+    .section { padding: 30px 25px; }
+    .movie-card { width: 150px; height: 225px; }
+    .carousel-btn { width: 40px; height: 40px; font-size: 16px; }
+    .carousel-btn.prev { left: -20px; }
+    .carousel-btn.next { right: -20px; }
+    .modal-hero { height: 250px; }
+    .modal-title { font-size: 28px; }
+    .modal-body { padding: 20px; }
   }
 </style>
 
@@ -413,41 +691,46 @@
 </div>
 
 <section class="section">
-  {% if movies %}
-    <div class="movies">
-      {% for movie in movies %}
-        <div class="movie-card" onclick="openModal({{ forloop.counter0 }})">
-          <button class="remove-btn" onclick="event.stopPropagation(); removeFromWatchlist({{ movie.id }})" title="Remove from watchlist">
-            ✕
-          </button>
-          {% if movie.thumbnail %}
-            <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
-          {% else %}
-            <img src="https://via.placeholder.com/200x300?text=No+Image" alt="{{ movie.title }}">
-          {% endif %}
-          <div class="movie-card-overlay">
-            <h3>{{ movie.title }}</h3>
-            <p>{{ movie.year }}{% if movie.language %} • {{ movie.language.name }}{% endif %}</p>
-            <span class="movie-genre">{{ movie.get_genres_display }}</span>
+  <h2>Saved Movies</h2>
+  <div class="movie-carousel">
+    <button class="carousel-btn prev" onclick="scrollCarousel('watchlist-movies', -1)">&lt;</button>
+    <div class="movies" id="watchlist-movies">
+      {% if movies %}
+        {% for movie in movies %}
+          <div class="movie-card" data-movie-id="{{ movie.id }}" onclick="openModal({{ forloop.counter0 }})">
+            <button class="remove-btn" onclick="event.stopPropagation(); removeFromWatchlist({{ movie.id }})" title="Remove from watchlist">✕</button>
+            {% if movie.thumbnail %}
+              <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
+            {% else %}
+              <img src="https://via.placeholder.com/200x300?text=No+Image" alt="{{ movie.title }}">
+            {% endif %}
+            <div class="movie-card-overlay">
+              <h3>{{ movie.title }}</h3>
+              <p>{{ movie.year }}{% if movie.language %} • {{ movie.language.name }}{% endif %}</p>
+              <span class="movie-genre">{{ movie.get_genres_display }}</span>
+            </div>
           </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.5">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <h3>Your watchlist is empty</h3>
+          <p>Save movies to watch them later!</p>
+          <button onclick="window.location.href='{% url 'movies:landing' %}'">Browse Movies</button>
         </div>
-      {% endfor %}
+      {% endif %}
     </div>
-  {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">📺</div>
-      <h2>Your watchlist is empty</h2>
-      <p>Add movies to your watchlist to watch them later!</p>
-      <a href="{% url 'movies:landing' %}" class="btn">Browse Movies</a>
-    </div>
-  {% endif %}
+    <button class="carousel-btn next" onclick="scrollCarousel('watchlist-movies', 1)">&gt;</button>
+  </div>
 </section>
 
-<!-- Modal -->
+<!-- Movie Details Modal -->
 <div class="modal" id="movieModal">
   <div class="modal-content">
     <button class="modal-close" onclick="closeModal()">&times;</button>
-    
+
     <div class="modal-hero" id="modalHero">
       <div class="modal-hero-overlay">
         <h1 class="modal-title" id="modalTitle">Movie Title</h1>
@@ -469,9 +752,7 @@
         </button>
       </div>
 
-      <p class="modal-description" id="modalDescription">
-        Movie description goes here...
-      </p>
+      <p class="modal-description" id="modalDescription">Movie description goes here...</p>
 
       <div class="modal-info">
         <div class="modal-info-row">
@@ -480,7 +761,7 @@
         </div>
         <div class="modal-info-row">
           <span class="modal-info-label">Genres:</span>
-          <span class="modal-info-value" id="modalGenre">Action</span>
+          <span class="modal-info-value" id="modalGenre">Unknown</span>
         </div>
         <div class="modal-info-row">
           <span class="modal-info-label">Language:</span>
@@ -491,11 +772,82 @@
           <span class="modal-info-value" id="modalViews">0</span>
         </div>
       </div>
+
+      <!-- Review Section -->
+      <div class="review-section">
+        <h3>Reviews</h3>
+
+        <div class="review-input" id="reviewInput">
+          <div class="star-rating" id="starRating">
+            <span class="star" data-rating="1">★</span>
+            <span class="star" data-rating="2">★</span>
+            <span class="star" data-rating="3">★</span>
+            <span class="star" data-rating="4">★</span>
+            <span class="star" data-rating="5">★</span>
+          </div>
+          <textarea id="reviewText" placeholder="Write your review..." maxlength="1000"></textarea>
+          <div class="review-actions">
+            <button id="submitReview" class="btn-review-submit">Submit Review</button>
+            <button id="cancelEdit" class="btn-review-cancel" style="display: none;">Cancel</button>
+          </div>
+        </div>
+
+        <div class="reviews-list" id="reviewsList">
+          <div class="loading-reviews">Loading reviews...</div>
+        </div>
+      </div>
+
+      <!-- Recommendations Section -->
+      <div class="recommendations-section">
+        <div id="similarMovies" class="recommendation-group">
+          <h3>You might also like</h3>
+          <div class="recommendations-grid" id="similarMoviesGrid">
+            <div class="loading-reviews">Loading recommendations...</div>
+          </div>
+        </div>
+
+        <div id="userRecommendations" class="recommendation-group">
+          <h3>For you, we recommend</h3>
+          <div class="recommendations-grid" id="userRecommendationsGrid">
+            <div class="loading-reviews">Loading recommendations...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- User Profile Modal -->
+<div class="modal" id="userProfileModal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeUserProfile()">&times;</button>
+    <div class="modal-body">
+      <div class="user-profile-header">
+        <div class="user-avatar" id="profileAvatar">U</div>
+        <div class="user-info">
+          <h2 id="profileName">User Name</h2>
+          <p id="profileUsername">@username</p>
+          <p id="profileEmail">email@example.com</p>
+          <p id="profileJoined">Joined January 2024</p>
+        </div>
+      </div>
+      <div class="user-stats">
+        <div class="stat-item">
+          <span class="stat-number" id="profileMoviesWatched">0</span>
+          <span class="stat-label">Movies Watched</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="profileReviewsCount">0</span>
+          <span class="stat-label">Reviews Written</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
+  const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+
   const movies = [
     {% for movie in movies %}
     {
@@ -508,45 +860,53 @@
       genres: "{{ movie.get_genres_display }}",
       language: "{% if movie.language %}{{ movie.language.name }}{% else %}Unknown{% endif %}",
       cast: "{{ movie.cast|escapejs }}",
-      length: "{{ movie.movie_length }}",
-      rating: {{ movie.review_stars }},
-      views: {{ movie.views }}
+      length: "{{ movie.movie_length|default:'Unknown' }}",
+      rating: {{ movie.review_stars|default:"0.0" }},
+      views: {{ movie.views|default:0 }}
     }{% if not forloop.last %},{% endif %}
     {% endfor %}
   ];
 
   let currentMovieId = null;
+  let currentRating = 0;
+  let editingReviewId = null;
 
   function openModal(index) {
     const movie = movies[index];
+    if (!movie) return;
+
     currentMovieId = movie.id;
-    const modal = document.getElementById('movieModal');
-    
+
     document.getElementById('modalHero').style.backgroundImage = `linear-gradient(to top, #181818 0%, transparent 100%), url('${movie.thumbnail}')`;
     document.getElementById('modalTitle').textContent = movie.title;
-    document.getElementById('modalRating').textContent = `★ ${movie.rating.toFixed(1)}`;
+    document.getElementById('modalRating').textContent = `★ ${parseFloat(movie.rating).toFixed(1)}`;
     document.getElementById('modalYear').textContent = movie.year;
     document.getElementById('modalLength').textContent = movie.length;
-    document.getElementById('modalDescription').textContent = movie.description;
-    document.getElementById('modalCast').textContent = movie.cast;
-    document.getElementById('modalGenre').textContent = movie.genres;
-    document.getElementById('modalLanguage').textContent = movie.language;
+    document.getElementById('modalDescription').textContent = movie.description || 'No description available.';
+    document.getElementById('modalCast').textContent = movie.cast || 'Unknown';
+    document.getElementById('modalGenre').textContent = movie.genres || 'Unknown';
+    document.getElementById('modalLanguage').textContent = movie.language || 'Unknown';
     document.getElementById('modalViews').textContent = formatViews(movie.views);
-    
-    modal.classList.add('active');
+
+    document.getElementById('movieModal').classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    loadReviews(movie.id);
+    loadSimilarMovies(movie.id);
+    loadUserRecommendations();
   }
 
   function closeModal() {
-    const modal = document.getElementById('movieModal');
-    modal.classList.remove('active');
+    document.getElementById('movieModal').classList.remove('active');
     document.body.style.overflow = 'auto';
     currentMovieId = null;
+    resetReviewForm();
   }
 
   function playMovie() {
     const movie = movies.find(m => m.id === currentMovieId);
     if (movie && movie.video) {
+      incrementViewCount(currentMovieId);
       if (typeof openJetflixPlayer === 'function') {
         openJetflixPlayer(movie.video, movie.title);
         closeModal();
@@ -558,204 +918,372 @@
     }
   }
 
-  function openVideoPlayer(movie) {
-    if (typeof openJetflixPlayer === 'function') {
-      openJetflixPlayer(movie.video, movie.title);
-      closeModal();
-    }
-  }
-
-  function closeVideoPlayer() {
-    if (typeof closeJetflixPlayer === 'function') {
-      closeJetflixPlayer();
-    }
-  }
-
-  function formatViews(views) {
-    if (views >= 1000000) {
-      return (views / 1000000).toFixed(1) + 'M views';
-    } else if (views >= 1000) {
-      return (views / 1000).toFixed(1) + 'K views';
-    }
-    return views + ' views';
+  function incrementViewCount(movieId) {
+    fetch("{% url 'movies:increment_view' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify({ movie_id: movieId })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') {
+        const m = movies.find(m => m.id === movieId);
+        if (m) {
+          m.views = data.views;
+          document.getElementById('modalViews').textContent = formatViews(data.views);
+        }
+      }
+    })
+    .catch(err => console.error('Error incrementing view:', err));
   }
 
   function removeFromWatchlist(movieId) {
-    if (!confirm('Remove this movie from your watchlist?')) {
-      return;
-    }
-
     fetch("{% url 'movies:remove_from_watchlist' %}", {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken')
-      },
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
       body: JSON.stringify({ movie_id: movieId })
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
       if (data.status === 'success') {
-        // Reload page to update the list
-        location.reload();
+        const card = document.querySelector(`.movie-card[data-movie-id="${movieId}"]`);
+        if (card) card.remove();
+        const idx = movies.findIndex(m => m.id === movieId);
+        if (idx !== -1) movies.splice(idx, 1);
+        updateCount();
+        showNotification('Removed from watchlist', 'success');
       } else {
-        showNotification('Error: ' + data.message, 'error');
+        showNotification('Error removing movie', 'error');
       }
     })
-    .catch(error => {
-      console.error('Error:', error);
-      showNotification('An error occurred', 'error');
-    });
+    .catch(() => showNotification('An error occurred', 'error'));
   }
 
   function removeFromWatchlistModal() {
-    removeFromWatchlist(currentMovieId);
+    if (!currentMovieId) return;
+    const movieId = currentMovieId;
+    closeModal();
+    removeFromWatchlist(movieId);
+  }
+
+  function updateCount() {
+    const count = movies.length;
+    const header = document.querySelector('.watchlist-header p');
+    if (header) header.textContent = `${count} movie${count !== 1 ? 's' : ''} saved`;
+    if (count === 0) location.reload();
+  }
+
+  // Review System
+  function loadReviews(movieId) {
+    const reviewsList = document.getElementById('reviewsList');
+    reviewsList.innerHTML = '<div class="loading-reviews">Loading reviews...</div>';
+
+    fetch(`/movies/api/reviews/${movieId}/`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'success') {
+          displayReviews(data.reviews, data.average_rating);
+          updateMovieRating(movieId, data.average_rating);
+        } else {
+          reviewsList.innerHTML = '<div class="no-reviews">Error loading reviews</div>';
+        }
+      })
+      .catch(() => {
+        reviewsList.innerHTML = '<div class="no-reviews">Error loading reviews</div>';
+      });
+  }
+
+  function displayReviews(reviews, averageRating) {
+    const reviewsList = document.getElementById('reviewsList');
+
+    if (reviews.length === 0) {
+      reviewsList.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to review!</div>';
+      return;
+    }
+
+    reviewsList.innerHTML = reviews.map(review => `
+      <div class="review-item" data-review-id="${review.id}">
+        <div class="review-header">
+          <div class="review-user">
+            <span class="review-username" onclick="showUserProfile(${review.user_id})">${review.user}</span>
+            <span class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span>
+            <span class="review-time">${review.created_at}</span>
+          </div>
+          ${review.is_owner ? `
+            <div class="review-actions-btn">
+              <button class="btn-edit-review" onclick="editReview(${review.id}, ${review.rating}, '${review.review_text.replace(/'/g, "\\'")}')">Edit</button>
+              <button class="btn-delete-review" onclick="deleteReview(${review.id})">Delete</button>
+            </div>
+          ` : ''}
+        </div>
+        <div class="review-text">${review.review_text}</div>
+      </div>
+    `).join('');
+  }
+
+  function updateMovieRating(movieId, newRating) {
+    const m = movies.find(m => m.id === movieId);
+    if (m) m.rating = newRating;
+    document.getElementById('modalRating').textContent = `★ ${parseFloat(newRating).toFixed(1)}`;
+  }
+
+  function submitReview() {
+    if (!isAuthenticated) {
+      showNotification('Please login to submit a review', 'info');
+      return;
+    }
+
+    if (!currentMovieId || currentRating === 0) {
+      showNotification('Please select a rating', 'error');
+      return;
+    }
+
+    const reviewText = document.getElementById('reviewText').value.trim();
+    const submitBtn = document.getElementById('submitReview');
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = editingReviewId ? 'Updating...' : 'Submitting...';
+
+    const url = editingReviewId ?
+      `/movies/api/reviews/edit/${editingReviewId}/` :
+      '/movies/api/reviews/add/';
+
+    const payload = editingReviewId ?
+      { rating: currentRating, review_text: reviewText } :
+      { movie_id: currentMovieId, rating: currentRating, review_text: reviewText };
+
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') {
+        showNotification(data.message, 'success');
+        loadReviews(currentMovieId);
+        resetReviewForm();
+        updateMovieRating(currentMovieId, data.average_rating);
+      } else {
+        showNotification(data.message, 'error');
+      }
+    })
+    .catch(() => showNotification('Error submitting review', 'error'))
+    .finally(() => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Review';
+    });
+  }
+
+  function editReview(reviewId, rating, reviewText) {
+    editingReviewId = reviewId;
+    currentRating = rating;
+    updateStarDisplay(rating);
+    document.getElementById('reviewText').value = reviewText;
+    document.getElementById('submitReview').textContent = 'Update Review';
+    document.getElementById('cancelEdit').style.display = 'inline-block';
+    document.getElementById('reviewInput').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function deleteReview(reviewId) {
+    if (!confirm('Are you sure you want to delete this review?')) return;
+
+    fetch(`/movies/api/reviews/delete/${reviewId}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') {
+        showNotification(data.message, 'success');
+        loadReviews(currentMovieId);
+        updateMovieRating(currentMovieId, data.average_rating);
+      } else {
+        showNotification(data.message, 'error');
+      }
+    })
+    .catch(() => showNotification('Error deleting review', 'error'));
+  }
+
+  function resetReviewForm() {
+    currentRating = 0;
+    editingReviewId = null;
+    document.getElementById('reviewText').value = '';
+    document.getElementById('submitReview').textContent = 'Submit Review';
+    document.getElementById('cancelEdit').style.display = 'none';
+    updateStarDisplay(0);
+  }
+
+  function updateStarDisplay(rating) {
+    document.querySelectorAll('.star').forEach((star, i) => {
+      star.classList.toggle('active', i < rating);
+    });
+  }
+
+  // Recommendations
+  function loadSimilarMovies(movieId) {
+    const grid = document.getElementById('similarMoviesGrid');
+    grid.innerHTML = '<div class="loading-reviews">Loading recommendations...</div>';
+
+    fetch(`/movies/api/recommendations/similar/${movieId}/`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'success') {
+          displayRecommendations(data.movies, 'similarMoviesGrid');
+        } else {
+          grid.innerHTML = '<div class="no-reviews">No similar movies found</div>';
+        }
+      })
+      .catch(() => { grid.innerHTML = '<div class="no-reviews">Error loading recommendations</div>'; });
+  }
+
+  function loadUserRecommendations() {
+    const grid = document.getElementById('userRecommendationsGrid');
+    grid.innerHTML = '<div class="loading-reviews">Loading recommendations...</div>';
+
+    fetch('/movies/api/recommendations/user/')
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'success') {
+          displayRecommendations(data.movies, 'userRecommendationsGrid');
+        } else {
+          grid.innerHTML = '<div class="no-reviews">No recommendations available</div>';
+        }
+      })
+      .catch(() => { grid.innerHTML = '<div class="no-reviews">Error loading recommendations</div>'; });
+  }
+
+  function displayRecommendations(recs, gridId) {
+    const grid = document.getElementById(gridId);
+    if (!recs || recs.length === 0) {
+      grid.innerHTML = '<div class="no-reviews">No recommendations available</div>';
+      return;
+    }
+    grid.innerHTML = recs.map(movie => `
+      <div class="recommendation-card" onclick="openRecommendedMovie(${movie.id})">
+        <img src="${movie.thumbnail}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/120x180?text=No+Image'">
+        <h4>${movie.title}</h4>
+        <p>★ ${parseFloat(movie.rating).toFixed(1)} • ${movie.year}</p>
+      </div>
+    `).join('');
+  }
+
+  function openRecommendedMovie(movieId) {
+    const idx = movies.findIndex(m => m.id === movieId);
+    if (idx !== -1) {
+      closeModal();
+      setTimeout(() => openModal(idx), 100);
+    }
+  }
+
+  // User Profile
+  function showUserProfile(userId) {
+    fetch(`/movies/api/user/${userId}/`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'success') {
+          const p = data.profile;
+          document.getElementById('profileAvatar').textContent = p.full_name.charAt(0).toUpperCase();
+          document.getElementById('profileName').textContent = p.full_name;
+          document.getElementById('profileUsername').textContent = `@${p.username}`;
+          document.getElementById('profileEmail').textContent = p.email;
+          document.getElementById('profileJoined').textContent = `Joined ${p.joined}`;
+          document.getElementById('profileMoviesWatched').textContent = p.movies_watched;
+          document.getElementById('profileReviewsCount').textContent = p.reviews_count;
+          document.getElementById('userProfileModal').classList.add('active');
+          document.body.style.overflow = 'hidden';
+        } else {
+          showNotification('Error loading user profile', 'error');
+        }
+      })
+      .catch(() => showNotification('Error loading user profile', 'error'));
+  }
+
+  function closeUserProfile() {
+    document.getElementById('userProfileModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+  }
+
+  // Utilities
+  function formatViews(views) {
+    if (views >= 1000000) return (views / 1000000).toFixed(1) + 'M views';
+    if (views >= 1000) return (views / 1000).toFixed(1) + 'K views';
+    return views + ' views';
+  }
+
+  function scrollCarousel(carouselId, direction) {
+    const carousel = document.getElementById(carouselId);
+    carousel.scrollBy({ left: direction * 215 * 4, behavior: 'smooth' });
   }
 
   function showNotification(message, type) {
-    const existing = document.querySelector('.notification');
+    const existing = document.querySelector('.toast');
     if (existing) existing.remove();
-
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
+    const icons  = { success: '✓', error: '✕', info: 'ℹ' };
+    const titles = { success: 'Success', error: 'Error', info: 'Info' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+      <div class="toast-icon">${icons[type] || 'ℹ'}</div>
+      <div class="toast-body">
+        <div class="toast-title">${titles[type] || 'Notice'}</div>
+        <div class="toast-msg">${message}</div>
+      </div>
+      <button class="toast-close" onclick="this.closest('.toast').remove()">&times;</button>
+      <div class="toast-progress"></div>
+    `;
+    document.body.appendChild(toast);
     setTimeout(() => {
-      notification.style.animation = 'slideOut 0.3s ease-out';
-      setTimeout(() => notification.remove(), 300);
+      toast.classList.add('hide');
+      setTimeout(() => toast.remove(), 300);
     }, 3000);
   }
 
   function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
+    let val = null;
+    if (document.cookie) {
+      document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(name + '=')) val = decodeURIComponent(c.slice(name.length + 1));
+      });
     }
-    return cookieValue;
+    return val;
   }
 
-  // Enhanced Modal Video Player Controls
-  function initializeModalPlayer() {
-    const video = document.getElementById('videoPlayerElement');
-    const playPauseBtn = document.getElementById('playPauseBtnModal');
-    const rewindBtn = document.getElementById('rewindBtnModal');
-    const forwardBtn = document.getElementById('forwardBtnModal');
-    const progressBar = document.getElementById('progressBarModal');
-    const progressFilled = document.getElementById('progressFilledModal');
-    const currentTimeSpan = document.getElementById('currentTimeModal');
-    const durationSpan = document.getElementById('durationModal');
-    const muteBtn = document.getElementById('muteBtnModal');
-    const volumeSlider = document.getElementById('volumeSliderModal');
-    const fullscreenBtn = document.getElementById('fullscreenBtnModal');
-    
-    if (!video) return;
-    
-    // Play/Pause
-    playPauseBtn.addEventListener('click', () => {
-      if (video.paused) {
-        video.play();
-        playPauseBtn.querySelector('.play-icon').style.display = 'none';
-        playPauseBtn.querySelector('.pause-icon').style.display = 'inline';
-      } else {
-        video.pause();
-        playPauseBtn.querySelector('.play-icon').style.display = 'inline';
-        playPauseBtn.querySelector('.pause-icon').style.display = 'none';
-      }
-    });
-    
-    // Rewind 5 seconds
-    rewindBtn.addEventListener('click', () => {
-      video.currentTime = Math.max(0, video.currentTime - 5);
-    });
-    
-    // Forward 5 seconds
-    forwardBtn.addEventListener('click', () => {
-      video.currentTime = Math.min(video.duration, video.currentTime + 5);
-    });
-    
-    // Progress bar
-    video.addEventListener('timeupdate', () => {
-      if (video.duration) {
-        const progress = (video.currentTime / video.duration) * 100;
-        progressFilled.style.width = progress + '%';
-        currentTimeSpan.textContent = formatTime(video.currentTime);
-      }
-    });
-    
-    video.addEventListener('loadedmetadata', () => {
-      durationSpan.textContent = formatTime(video.duration);
-    });
-    
-    progressBar.addEventListener('click', (e) => {
-      const rect = progressBar.getBoundingClientRect();
-      const pos = (e.clientX - rect.left) / rect.width;
-      video.currentTime = pos * video.duration;
-    });
-    
-    // Volume controls
-    muteBtn.addEventListener('click', () => {
-      video.muted = !video.muted;
-      muteBtn.querySelector('.volume-on').style.display = video.muted ? 'none' : 'inline';
-      muteBtn.querySelector('.volume-off').style.display = video.muted ? 'inline' : 'none';
-    });
-    
-    volumeSlider.addEventListener('input', () => {
-      video.volume = volumeSlider.value / 100;
-    });
-    
-    // Fullscreen
-    fullscreenBtn.addEventListener('click', () => {
-      if (video.requestFullscreen) {
-        video.requestFullscreen();
-      }
-    });
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      if (document.getElementById('videoPlayerModal').classList.contains('active')) {
-        e.preventDefault();
-        switch(e.code) {
-          case 'Space':
-            playPauseBtn.click();
-            break;
-          case 'ArrowLeft':
-            rewindBtn.click();
-            break;
-          case 'ArrowRight':
-            forwardBtn.click();
-            break;
-        }
-      }
-    });
-    
-    // Auto-play
-    video.play();
-  }
-  
-  function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }
-    if (e.target === this) {
-      closeModal();
-    }
+  // Event listeners
+  document.getElementById('movieModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
   });
 
-  document.addEventListener('keydown', function(e) {
+  document.getElementById('userProfileModal').addEventListener('click', function(e) {
+    if (e.target === this) closeUserProfile();
+  });
+
+  document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       closeModal();
-      closeVideoPlayer();
+      closeUserProfile();
     }
   });
-</script>
 
+  document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('.star');
+    stars.forEach((star, index) => {
+      star.addEventListener('click', function() {
+        currentRating = index + 1;
+        updateStarDisplay(currentRating);
+      });
+      star.addEventListener('mouseenter', function() {
+        stars.forEach((s, i) => s.classList.toggle('hover', i <= index));
+      });
+    });
+
+    document.getElementById('starRating').addEventListener('mouseleave', function() {
+      stars.forEach(s => s.classList.remove('hover'));
+    });
+
+    document.getElementById('submitReview').addEventListener('click', submitReview);
+    document.getElementById('cancelEdit').addEventListener('click', resetReviewForm);
+  });
+</script>
 {% endblock %}

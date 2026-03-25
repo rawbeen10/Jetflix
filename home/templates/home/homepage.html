@@ -44,9 +44,15 @@
     /* Movie Grid - Carousel */
     .movies {
       display: flex;
-      overflow-x: hidden;
+      overflow-x: auto;
       gap: 15px;
       scroll-behavior: smooth;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+
+    .movies::-webkit-scrollbar {
+      display: none; /* Chrome/Safari/Opera */
     }
 
     .movie-carousel {
@@ -205,21 +211,85 @@
     }
 
     /* Notification styles */
-    .notification {
+    /* Toast Notification */
+    .toast {
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 24px;
+      right: 24px;
       z-index: 9999;
-      padding: 16px 24px;
-      border-radius: 8px;
-      color: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      font-weight: 500;
-      animation: slideIn 0.3s ease-out;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      min-width: 300px;
+      max-width: 380px;
+      background: #1e1e1e;
+      border-radius: 12px;
+      padding: 16px 18px 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+      animation: toastIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+      overflow: hidden;
     }
-    .notification.info { background: #2196F3; }
-    .notification.error { background: #e50914; }
-    .notification.success { background: #4CAF50; }
+    .toast.hide { animation: toastOut 0.3s ease forwards; }
+
+    .toast-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .toast.success .toast-icon { background: rgba(74,222,128,0.15); color: #4ade80; }
+    .toast.error   .toast-icon { background: rgba(229,9,20,0.15);   color: #e50914; }
+    .toast.info    .toast-icon { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+
+    .toast-body { flex: 1; min-width: 0; }
+
+    .toast-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 3px;
+      letter-spacing: 0.01em;
+    }
+
+    .toast-msg {
+      font-size: 13px;
+      color: #a0a0a0;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      color: #555;
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      flex-shrink: 0;
+      transition: color 0.2s;
+      margin-top: -1px;
+    }
+    .toast-close:hover { color: #fff; }
+
+    .toast-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      border-radius: 0 0 12px 12px;
+      animation: toastProgress 3s linear forwards;
+    }
+    .toast.success .toast-progress { background: #4ade80; }
+    .toast.error   .toast-progress { background: #e50914; }
+    .toast.info    .toast-progress { background: #60a5fa; }
 
     /* Enhanced Alert Modal */
     .alert-modal {
@@ -314,13 +384,17 @@
       color: #fff;
     }
 
-    @keyframes slideIn {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+    @keyframes toastIn {
+      from { transform: translateX(calc(100% + 30px)); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
     }
-    @keyframes slideOut {
+    @keyframes toastOut {
       from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(400px); opacity: 0; }
+      to   { transform: translateX(calc(100% + 30px)); opacity: 0; }
+    }
+    @keyframes toastProgress {
+      from { width: 100%; }
+      to   { width: 0%; }
     }
 
     /* Modal Styles */
@@ -1159,8 +1233,8 @@
           <button class="btn-primary" onclick="playMovie()">
             <span>▶</span> Play
           </button>
-          <button class="btn-secondary" onclick="addToWatchlist()">
-            <span>+</span> My List
+          <button class="btn-secondary" id="watchlistBtn" onclick="toggleWatchlist()">
+            <span id="watchlistBtnIcon">+</span> <span id="watchlistBtnText">My List</span>
           </button>
         </div>
 
@@ -1280,6 +1354,9 @@
 
   <script>
     const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+
+    // User's watchlist IDs
+    let userWatchlistIds = {{ user_watchlist_ids|default:"[]"|safe }};
     
     // Recently added movies
     const movies = [
@@ -1370,8 +1447,7 @@
       
       modal.classList.add('active');
       document.body.style.overflow = 'hidden';
-      
-      // Load reviews for this movie
+      updateWatchlistBtn(movie.id);
       loadReviews(movie.id);
       
       // Load recommendations
@@ -1480,39 +1556,70 @@
       }
     }
 
-    function addToWatchlist() {
+    function updateWatchlistBtn(movieId) {
+      const inList = userWatchlistIds.includes(movieId);
+      document.getElementById('watchlistBtnIcon').textContent = inList ? '✕' : '+';
+      document.getElementById('watchlistBtnText').textContent = inList ? 'Remove' : 'My List';
+      const btn = document.getElementById('watchlistBtn');
+      btn.style.backgroundColor = inList ? 'rgba(229,9,20,0.7)' : '';
+    }
+
+    function toggleWatchlist() {
       if (!isAuthenticated) {
         closeModal();
         handleLoginRequired('watchlist');
         return;
       }
-      
       if (!currentMovieId) return;
-      
+      if (userWatchlistIds.includes(currentMovieId)) {
+        removeFromWatchlist(currentMovieId);
+      } else {
+        addToWatchlist();
+      }
+    }
+
+    function addToWatchlist() {
+      if (!currentMovieId) return;
       fetch("{% url 'movies:add_to_watchlist' %}", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken')
-        },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
         body: JSON.stringify({ movie_id: currentMovieId })
       })
-      .then(response => response.json())
+      .then(r => r.json())
       .then(data => {
         if (data.status === 'success') {
           if (data.action === 'added') {
             showNotification('Added to your watchlist!', 'success');
+            userWatchlistIds.push(currentMovieId);
           } else {
             showNotification('Already in your watchlist!', 'info');
+            if (!userWatchlistIds.includes(currentMovieId)) userWatchlistIds.push(currentMovieId);
           }
+          updateWatchlistBtn(currentMovieId);
         } else {
           showNotification('Error: ' + data.message, 'error');
         }
       })
-      .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred', 'error');
-      });
+      .catch(() => showNotification('An error occurred', 'error'));
+    }
+
+    function removeFromWatchlist(movieId) {
+      fetch("{% url 'movies:remove_from_watchlist' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ movie_id: movieId })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'success') {
+          showNotification('Removed from watchlist', 'success');
+          userWatchlistIds = userWatchlistIds.filter(id => id !== movieId);
+          updateWatchlistBtn(movieId);
+        } else {
+          showNotification('Error removing movie', 'error');
+        }
+      })
+      .catch(() => showNotification('An error occurred', 'error'));
     }
 
     function handleLoginRequired(action, movieId = null) {
@@ -1527,17 +1634,28 @@
     }
 
     function showNotification(message, type) {
-      const existing = document.querySelector('.notification');
+      const existing = document.querySelector('.toast');
       if (existing) existing.remove();
 
-      const notification = document.createElement('div');
-      notification.className = `notification ${type}`;
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      
+      const icons  = { success: '✓', error: '✕', info: 'ℹ' };
+      const titles = { success: 'Success', error: 'Error', info: 'Info' };
+
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || 'ℹ'}</div>
+        <div class="toast-body">
+          <div class="toast-title">${titles[type] || 'Notice'}</div>
+          <div class="toast-msg">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.closest('.toast').remove()">&times;</button>
+        <div class="toast-progress"></div>
+      `;
+      document.body.appendChild(toast);
+
       setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 300);
       }, 3000);
     }
 

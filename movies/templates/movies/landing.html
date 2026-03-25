@@ -209,21 +209,42 @@
   }
 
   /* Notification */
-  .notification {
+  /* Toast Notification */
+  .toast {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 24px;
+    right: 24px;
     z-index: 9999;
-    padding: 16px 24px;
-    border-radius: 8px;
-    color: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    font-weight: 500;
-    animation: slideIn 0.3s ease-out;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    min-width: 300px;
+    max-width: 380px;
+    background: #1e1e1e;
+    border-radius: 12px;
+    padding: 16px 18px 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+    animation: toastIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+    overflow: hidden;
   }
-  .notification.info { background: #2196F3; }
-  .notification.error { background: #e50914; }
-  .notification.success { background: #4CAF50; }
+  .toast.hide { animation: toastOut 0.3s ease forwards; }
+  .toast-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; flex-shrink: 0; margin-top: 1px;
+  }
+  .toast.success .toast-icon { background: rgba(74,222,128,0.15); color: #4ade80; }
+  .toast.error   .toast-icon { background: rgba(229,9,20,0.15);   color: #e50914; }
+  .toast.info    .toast-icon { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+  .toast-body { flex: 1; min-width: 0; }
+  .toast-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+  .toast-msg { font-size: 13px; color: #a0a0a0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .toast-close { background: none; border: none; color: #555; font-size: 18px; cursor: pointer; line-height: 1; padding: 0; flex-shrink: 0; transition: color 0.2s; margin-top: -1px; }
+  .toast-close:hover { color: #fff; }
+  .toast-progress { position: absolute; bottom: 0; left: 0; height: 3px; border-radius: 0 0 12px 12px; animation: toastProgress 3s linear forwards; }
+  .toast.success .toast-progress { background: #4ade80; }
+  .toast.error   .toast-progress { background: #e50914; }
+  .toast.info    .toast-progress { background: #60a5fa; }
 
   /* Enhanced Alert Modal */
   .alert-modal {
@@ -318,13 +339,17 @@
     color: #fff;
   }
 
-  @keyframes slideIn {
-    from { transform: translateX(400px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+  @keyframes toastIn {
+    from { transform: translateX(calc(100% + 30px)); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
   }
-  @keyframes slideOut {
+  @keyframes toastOut {
     from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(400px); opacity: 0; }
+    to   { transform: translateX(calc(100% + 30px)); opacity: 0; }
+  }
+  @keyframes toastProgress {
+    from { width: 100%; }
+    to   { width: 0%; }
   }
 
   /* Modal */
@@ -896,36 +921,6 @@
 <section class="section">
   <div class="section-header">
     <h2>Browse Movies</h2>
-    <div class="search-container">
-      <input type="text" id="movieSearch" placeholder="Search movies..." class="search-input">
-      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"></circle>
-        <path d="m21 21-4.35-4.35"></path>
-      </svg>
-    </div>
-  </div>
-  
-  /* Search Results -->
-  <div class="movies" id="moviesGrid" style="display: none; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
-    {% if movies %}
-      {% for movie in movies %}
-        <div class="movie-card" onclick="openModal({{ forloop.counter0 }})">
-          {% if movie.thumbnail %}
-            <img src="{{ movie.thumbnail.url }}" alt="{{ movie.title }}">
-          {% else %}
-            <img src="https://via.placeholder.com/200x300?text=No+Image" alt="{{ movie.title }}">
-          {% endif %}
-          <div class="movie-card-overlay">
-            <h3>{{ movie.title }}</h3>
-            <p>{{ movie.year }}{% if movie.language %} • {{ movie.language.name }}{% endif %}</p>
-            <span class="movie-genre">{{ movie.get_genres_display }}</span>
-          </div>
-        </div>
-      {% endfor %}
-    {% endif %}
-  </div>
-  <div class="no-results" id="noResults" style="display: none;">
-    <p style="color:#ccc; padding: 20px; text-align: center;">No movies found matching your search.</p>
   </div>
   
   <!-- Browse Content -->
@@ -1011,11 +1006,8 @@
         <button class="btn btn-primary" onclick="playMovie()">
           <span>▶</span> Play
         </button>
-        <button class="btn-icon" onclick="addToWatchlist()" title="Add to Watchlist">
-          <span>+</span>
-        </button>
-        <button class="btn-icon" onclick="toggleLike()" title="Like">
-          <span id="likeIcon">👍</span>
+        <button class="btn btn-secondary" id="watchlistBtn" onclick="toggleWatchlist()">
+          <span id="watchlistBtnIcon">+</span> <span id="watchlistBtnText">My List</span>
         </button>
       </div>
 
@@ -1143,8 +1135,6 @@
   let currentRating = 0;
   let currentMovieId = null;
   let editingReviewId = null;
-  let allMovies = [...movies];
-  let searchTimeout;
 
   function openModal(index) {
     if (!isAuthenticated) {
@@ -1173,8 +1163,7 @@
     // Show modal
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
-    
-    // Load reviews for this movie
+    updateWatchlistBtn(movie.id);
     loadReviews(movie.id);
     
     // Load recommendations
@@ -1191,7 +1180,6 @@
     currentRating = 0;
     currentMovieId = null;
     resetReviewForm();
-    document.getElementById('likeIcon').textContent = '👍';
   }
 
   function playMovie() {
@@ -1295,25 +1283,36 @@
     return views + ' views';
   }
 
-  function addToWatchlist() {
+  function updateWatchlistBtn(movieId) {
+    const inList = userWatchlistIds.includes(movieId);
+    document.getElementById('watchlistBtnIcon').textContent = inList ? '✕' : '+';
+    document.getElementById('watchlistBtnText').textContent = inList ? 'Remove' : 'My List';
+    const btn = document.getElementById('watchlistBtn');
+    btn.style.backgroundColor = inList ? 'rgba(229,9,20,0.7)' : '';
+  }
+
+  function toggleWatchlist() {
     if (!isAuthenticated) {
       closeModal();
       handleLoginRequired('watchlist');
       return;
     }
-
     if (!currentMovieId) return;
-    
-    // Make AJAX request to add to watchlist
+    if (userWatchlistIds.includes(currentMovieId)) {
+      removeFromWatchlist(currentMovieId);
+    } else {
+      addToWatchlist();
+    }
+  }
+
+  function addToWatchlist() {
+    if (!currentMovieId) return;
     fetch("{% url 'movies:add_to_watchlist' %}", {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken')
-      },
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
       body: JSON.stringify({ movie_id: currentMovieId })
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
       if (data.status === 'success') {
         if (data.action === 'added') {
@@ -1321,31 +1320,33 @@
           userWatchlistIds.push(currentMovieId);
         } else {
           showNotification('Already in your watchlist!', 'info');
+          if (!userWatchlistIds.includes(currentMovieId)) userWatchlistIds.push(currentMovieId);
         }
+        updateWatchlistBtn(currentMovieId);
       } else {
         showNotification('Error: ' + data.message, 'error');
       }
     })
-    .catch(error => {
-      console.error('Error:', error);
-      showNotification('An error occurred', 'error');
-    });
+    .catch(() => showNotification('An error occurred', 'error'));
   }
 
-  function toggleLike() {
-    if (!isAuthenticated) {
-      showNotification('Please login to like movies', 'info');
-      return;
-    }
-
-    const likeIcon = document.getElementById('likeIcon');
-    if (likeIcon.textContent === '👍') {
-      likeIcon.textContent = '❤️';
-      showNotification('Added to favorites!', 'success');
-    } else {
-      likeIcon.textContent = '👍';
-      showNotification('Removed from favorites', 'info');
-    }
+  function removeFromWatchlist(movieId) {
+    fetch("{% url 'movies:remove_from_watchlist' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify({ movie_id: movieId })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') {
+        showNotification('Removed from watchlist', 'success');
+        userWatchlistIds = userWatchlistIds.filter(id => id !== movieId);
+        updateWatchlistBtn(movieId);
+      } else {
+        showNotification('Error removing movie', 'error');
+      }
+    })
+    .catch(() => showNotification('An error occurred', 'error'));
   }
 
   function submitReview() {
@@ -1412,17 +1413,25 @@
   }
 
   function showNotification(message, type) {
-    const existing = document.querySelector('.notification');
+    const existing = document.querySelector('.toast');
     if (existing) existing.remove();
-
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
+    const icons  = { success: '✓', error: '✕', info: 'ℹ' };
+    const titles = { success: 'Success', error: 'Error', info: 'Info' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+      <div class="toast-icon">${icons[type] || 'ℹ'}</div>
+      <div class="toast-body">
+        <div class="toast-title">${titles[type] || 'Notice'}</div>
+        <div class="toast-msg">${message}</div>
+      </div>
+      <button class="toast-close" onclick="this.closest('.toast').remove()">&times;</button>
+      <div class="toast-progress"></div>
+    `;
+    document.body.appendChild(toast);
     setTimeout(() => {
-      notification.style.animation = 'slideOut 0.3s ease-out';
-      setTimeout(() => notification.remove(), 300);
+      toast.classList.add('hide');
+      setTimeout(() => toast.remove(), 300);
     }, 3000);
   }
 
@@ -1623,12 +1632,6 @@
     // Cancel edit button
     document.getElementById('cancelEdit').addEventListener('click', resetReviewForm);
     
-    // Search functionality
-    const searchInput = document.getElementById('movieSearch');
-    if (searchInput) {
-      searchInput.addEventListener('input', handleSearch);
-    }
-    
     // Initialize carousels
     initializeCarousels();
   });
@@ -1645,7 +1648,6 @@
   }
 
   function initializeCarousels() {
-    // Update button states for all carousels
     const carousels = document.querySelectorAll('.movies');
     carousels.forEach(carousel => {
       updateCarouselButtons(carousel);
@@ -1660,70 +1662,6 @@
     if (prevBtn && nextBtn) {
       prevBtn.disabled = carousel.scrollLeft <= 0;
       nextBtn.disabled = carousel.scrollLeft >= carousel.scrollWidth - carousel.clientWidth;
-    }
-  }
-
-  function handleSearch(e) {
-    clearTimeout(searchTimeout);
-    const query = e.target.value.trim().toLowerCase();
-    
-    if (query === '') {
-      showBrowseContent();
-    } else {
-      searchTimeout = setTimeout(() => {
-        const filtered = allMovies.filter(movie => 
-          movie.title.toLowerCase().includes(query) ||
-          (movie.description && movie.description.toLowerCase().includes(query)) ||
-          (movie.cast && movie.cast.toLowerCase().includes(query)) ||
-          (movie.genres && movie.genres.toLowerCase().includes(query))
-        );
-        displaySearchResults(filtered);
-      }, 300);
-    }
-  }
-
-  function displaySearchResults(moviesToShow) {
-    document.getElementById('browseContent').style.display = 'none';
-    
-    const moviesGrid = document.getElementById('moviesGrid');
-    const noResults = document.getElementById('noResults');
-    
-    if (moviesToShow.length === 0) {
-      moviesGrid.style.display = 'none';
-      noResults.style.display = 'block';
-    } else {
-      moviesGrid.style.display = 'grid';
-      noResults.style.display = 'none';
-      
-      const moviesHTML = moviesToShow.map((movie, index) => `
-        <div class="movie-card" onclick="openModalFromSearch(${movie.id})">
-          <img src="${movie.thumbnail}" alt="${movie.title}">
-          <div class="movie-card-overlay">
-            <h3>${movie.title}</h3>
-            <p>${movie.year} • ${movie.language}</p>
-            <span class="movie-genre">${movie.genres}</span>
-          </div>
-        </div>
-      `).join('');
-      
-      moviesGrid.innerHTML = moviesHTML;
-    }
-  }
-
-  function showBrowseContent() {
-    document.getElementById('browseContent').style.display = 'block';
-    document.getElementById('moviesGrid').style.display = 'none';
-    document.getElementById('noResults').style.display = 'none';
-    document.getElementById('movieSearch').value = '';
-  }
-
-  function openModalFromSearch(movieId) {
-    const movieIndex = allMovies.findIndex(m => m.id === movieId);
-    if (movieIndex !== -1) {
-      // Update movies array for modal
-      movies.length = 0;
-      movies.push(...allMovies);
-      openModal(movieIndex);
     }
   }
 
