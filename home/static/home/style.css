@@ -149,16 +149,15 @@ body {
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
-  background: rgba(0, 0, 0, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   min-width: 200px;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);
   transition: all 0.3s ease;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(15px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
   z-index: 10000;
   padding: 0.5rem 0;
 }
@@ -178,7 +177,7 @@ body {
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-bottom: 6px solid rgba(0, 0, 0, 0.95);
+  border-bottom: 6px solid #1a1a1a;
 }
 
 .profile-dropdown .dropdown-item {
