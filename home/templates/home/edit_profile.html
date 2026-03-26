@@ -181,6 +181,15 @@
 {% endblock %}
 
 {% block content %}
+{% if messages %}
+{% for message in messages %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    showNotification('{{ message|escapejs }}', '{% if message.tags == "success" %}success{% elif message.tags == "error" %}error{% else %}info{% endif %}');
+  });
+</script>
+{% endfor %}
+{% endif %}
 <div class="edit-profile-container">
   <div class="edit-profile-header">
     <h1>Edit Profile</h1>

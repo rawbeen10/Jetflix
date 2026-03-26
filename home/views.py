@@ -156,12 +156,12 @@ def watchlist_view(request):
 @login_required(login_url='/')
 def profile_view(request):
     try:
-        # Get user's watch history count
         watch_count = WatchHistory.objects.filter(user=request.user).count()
-        
+        payment = Payment.objects.filter(user=request.user).order_by('-created_at').first()
         return render(request, 'home/profile.html', {
             'user': request.user,
-            'watch_count': watch_count
+            'watch_count': watch_count,
+            'payment': payment,
         })
     except Exception as e:
         logger.error(f"Error in profile_view: {str(e)}")
