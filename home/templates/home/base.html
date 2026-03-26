@@ -1148,27 +1148,23 @@
         // ── Rewind ────────────────────────────────────────────────────────────
         const rewindBtn = document.getElementById('rewindBtn');
         if (rewindBtn) {
+          rewindBtn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
           rewindBtn.addEventListener('click', (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             e.stopPropagation();
-            console.log('Rewind clicked');
             this.rewind();
           });
-        } else {
-          console.error('Rewind button not found');
         }
 
         // ── Forward ───────────────────────────────────────────────────────────
         const forwardBtn = document.getElementById('forwardBtn');
         if (forwardBtn) {
+          forwardBtn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
           forwardBtn.addEventListener('click', (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             e.stopPropagation();
-            console.log('Forward clicked');
             this.forward();
           });
-        } else {
-          console.error('Forward button not found');
         }
 
         // ── Progress / Seek ───────────────────────────────────────────────────
@@ -1188,9 +1184,9 @@
         });
         document.addEventListener('mouseup', (e) => {
           if (this.isDragging) {
+            this.isDragging = false;
             this.seek(e);
             if (this.wasPlayingBeforeDrag) this.video.play();
-            this.isDragging = false;
           }
         });
 

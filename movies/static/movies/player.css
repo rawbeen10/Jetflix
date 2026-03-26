@@ -244,6 +244,11 @@ body {
     width: 20px;
     height: 20px;
     fill: currentColor;
+    pointer-events: none;
+}
+
+.control-btn svg * {
+    pointer-events: none;
 }
 
 .control-btn#playPauseBtn svg {

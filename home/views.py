@@ -449,7 +449,7 @@ def payment_success_view(request):
                 payment.save()
                 
                 messages.success(request, 'Payment successful! You now have access to all movies.')
-                return redirect('/')  # Redirect to login page
+                return redirect('home')
         except (Payment.DoesNotExist, json.JSONDecodeError, Exception) as e:
             logger.error(f"Payment verification failed: {e}")
             messages.error(request, 'Payment verification failed.')
@@ -464,7 +464,7 @@ def payment_success_view(request):
             payment.save()
             
             messages.success(request, 'Payment successful! You now have access to all movies.')
-            return redirect('/')  # Redirect to login page
+            return redirect('home')
         except Payment.DoesNotExist:
             messages.error(request, 'Payment verification failed.')
     

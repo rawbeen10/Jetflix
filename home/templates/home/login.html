@@ -197,7 +197,9 @@
 
             {% if messages %}
                 {% for message in messages %}
+                    {% if message.tags == 'error' or message.tags == 'info' %}
                     <div class="error-message">{{ message }}</div>
+                    {% endif %}
                 {% endfor %}
             {% endif %}
 
