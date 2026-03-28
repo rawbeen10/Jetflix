@@ -65,6 +65,7 @@ class JetflixPlayer {
         this.video.addEventListener('pause', () => this.onPause());
         this.video.addEventListener('timeupdate', () => this.updateProgress());
         this.video.addEventListener('loadedmetadata', () => this.updateDuration());
+        this.video.addEventListener('durationchange', () => this.updateDuration());
         this.video.addEventListener('volumechange', () => this.updateVolumeUI());
         this.video.addEventListener('ended', () => this.onVideoEnd());
         
@@ -207,31 +208,14 @@ class JetflixPlayer {
     }
     
     rewind() {
-        const newTime = Math.max(0, this.video.currentTime - 5);
-        console.log(`Rewind: ${this.video.currentTime} -> ${newTime}`);
-        this.video.currentTime = newTime;
+        this.video.currentTime = Math.max(0, this.video.currentTime - 10);
         this.showControls();
     }
     
     forward() {
-        // Wait for video metadata to be loaded
-        if (!this.video.duration || isNaN(this.video.duration) || this.video.duration === 0) {
-            console.log('Video duration not available yet');
-            return;
-        }
-        
-        const currentTime = this.video.currentTime || 0;
         const duration = this.video.duration;
-        const newTime = Math.min(duration - 0.1, currentTime + 5); // Leave 0.1s buffer from end
-        
-        console.log(`Forward: ${currentTime.toFixed(2)} -> ${newTime.toFixed(2)} (duration: ${duration.toFixed(2)})`);
-        
-        try {
-            this.video.currentTime = newTime;
-        } catch (error) {
-            console.error('Error setting video time:', error);
-        }
-        
+        if (!duration || isNaN(duration) || !isFinite(duration)) return;
+        this.video.currentTime = Math.min(duration - 0.1, this.video.currentTime + 10);
         this.showControls();
     }
     
@@ -477,7 +461,10 @@ class JetflixPlayer {
     }
     
     updateDuration() {
-        this.durationEl.textContent = this.formatTime(this.video.duration);
+        const d = this.video.duration;
+        if (d && isFinite(d) && !isNaN(d)) {
+            this.durationEl.textContent = this.formatTime(d);
+        }
     }
     
     updateVolumeUI() {

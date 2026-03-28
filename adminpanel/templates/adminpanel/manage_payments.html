@@ -187,20 +187,6 @@
     border-color: #e50914;
   }
   
-  .expires-soon {
-    color: #ffc107;
-    font-size: 11px;
-  }
-  
-  .expired {
-    color: #dc3545;
-    font-size: 11px;
-  }
-  
-  .active-payment {
-    color: #28a745;
-    font-size: 11px;
-  }
 </style>
 
 <div class="payments-header">
@@ -245,8 +231,6 @@
         <th>eSewa Ref</th>
         <th>Status</th>
         <th>Created</th>
-        <th>Expires</th>
-        <th>Validity</th>
       </tr>
     </thead>
     <tbody id="paymentsTableBody">
@@ -281,20 +265,10 @@
           </span>
         </td>
         <td>{{ payment.created_at|date:"M d, Y H:i" }}</td>
-        <td>{{ payment.expires_at|date:"M d, Y" }}</td>
-        <td>
-          {% if payment.is_active %}
-            <span class="active-payment">✓ Active</span>
-          {% elif payment.status == 'completed' %}
-            <span class="expired">✗ Expired</span>
-          {% else %}
-            <span style="color: #666;">-</span>
-          {% endif %}
-        </td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="9" style="text-align: center; padding: 40px; color: #888;">
+        <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
           No payments found.
         </td>
       </tr>

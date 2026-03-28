@@ -1,55 +1,73 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.db.models import Q, Count
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_POST
+from django.http import JsonResponse, StreamingHttpResponse, HttpResponse
+from django.db.models import Q
 from .forms import CustomUserCreationForm
-from .models import Payment
 from movies.models import Movie, Watchlist, WatchHistory, UserInteraction
 import logging
-import uuid
-import hashlib
-import hmac
-import base64
-import json
-import requests
-
-# eSewa Configuration
-ESEWA_MERCHANT_CODE = 'EPAYTEST'
-ESEWA_SECRET_KEY = '8gBm/:&EnhH.1/q'
-ESEWA_SANDBOX_URL = 'https://rc-epay.esewa.com.np/api/epay/main/v2/form'
-ESEWA_STATUS_URL = 'https://rc.esewa.com.np/api/epay/transaction/status/'
-
-def generate_esewa_signature(total_amount, transaction_uuid, product_code):
-    """Generate HMAC SHA256 signature for eSewa"""
-    message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
-    signature = hmac.new(
-        ESEWA_SECRET_KEY.encode('utf-8'),
-        message.encode('utf-8'),
-        hashlib.sha256
-    ).digest()
-    return base64.b64encode(signature).decode('utf-8')
-
-def check_esewa_payment_status(transaction_uuid, total_amount):
-    """Check payment status with eSewa API"""
-    try:
-        url = f"{ESEWA_STATUS_URL}?product_code={ESEWA_MERCHANT_CODE}&total_amount={total_amount}&transaction_uuid={transaction_uuid}"
-        response = requests.get(url, timeout=10)
-        
-        if response.status_code == 200:
-            data = response.json()
-            return data.get('status'), data.get('ref_id')
-        else:
-            return None, None
-    except Exception:
-        return None, None
+import os
+import mimetypes
 
 logger = logging.getLogger(__name__)
+
+
+def video_stream(request, path):
+    """Serve video files with HTTP Range request support so browsers can seek and get duration."""
+    from django.conf import settings
+    full_path = os.path.join(settings.MEDIA_ROOT, path)
+
+    if not os.path.exists(full_path) or not os.path.isfile(full_path):
+        return HttpResponse(status=404)
+
+    file_size = os.path.getsize(full_path)
+    content_type, _ = mimetypes.guess_type(full_path)
+    content_type = content_type or 'video/mp4'
+
+    range_header = request.META.get('HTTP_RANGE', '').strip()
+
+    if range_header:
+        range_match = range_header.replace('bytes=', '').split('-')
+        start = int(range_match[0]) if range_match[0] else 0
+        end = int(range_match[1]) if range_match[1] else file_size - 1
+        end = min(end, file_size - 1)
+        length = end - start + 1
+
+        def file_iterator(path, start, length, chunk=8192):
+            with open(path, 'rb') as f:
+                f.seek(start)
+                remaining = length
+                while remaining > 0:
+                    data = f.read(min(chunk, remaining))
+                    if not data:
+                        break
+                    remaining -= len(data)
+                    yield data
+
+        response = StreamingHttpResponse(
+            file_iterator(full_path, start, length),
+            status=206,
+            content_type=content_type,
+        )
+        response['Content-Length'] = str(length)
+        response['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+        response['Accept-Ranges'] = 'bytes'
+        return response
+
+    # No range header — serve full file
+    def full_iterator(path, chunk=8192):
+        with open(path, 'rb') as f:
+            while True:
+                data = f.read(chunk)
+                if not data:
+                    break
+                yield data
+
+    response = StreamingHttpResponse(full_iterator(full_path), content_type=content_type)
+    response['Content-Length'] = str(file_size)
+    response['Accept-Ranges'] = 'bytes'
+    return response
 
 
 # Home / Register
@@ -59,11 +77,10 @@ def register_view(request):
             form = CustomUserCreationForm(request.POST)
             if form.is_valid():
                 user = form.save()
-                login(request, user)  # Auto-login after registration
-                messages.success(request, "Account created successfully! Please complete payment to access movies.")
-                return redirect('payment')
+                login(request, user)
+                messages.success(request, "Account created successfully!")
+                return redirect('home')
             else:
-                # Return to register page with form errors
                 return render(request, 'home/register.html', {'form': form})
         else:
             form = CustomUserCreationForm()
@@ -76,17 +93,8 @@ def register_view(request):
 
 # Login
 def login_view(request):
-    # Redirect authenticated users with payment to dashboard
     if request.user.is_authenticated:
-        has_payment = Payment.objects.filter(
-            user=request.user, 
-            status='completed'
-        ).exists()
-        
-        if has_payment:
-            return redirect('home')
-        else:
-            return redirect('payment')
+        return redirect('home')
     
     try:
         if request.method == 'POST':
@@ -96,18 +104,8 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
-                
-                # Check if user has active payment
-                has_payment = Payment.objects.filter(
-                    user=user, 
-                    status='completed'
-                ).exists()
-                
-                if has_payment:
-                    messages.success(request, f"Welcome back, {user.username}!")
-                    return redirect('home')
-                else:
-                    return redirect('payment')
+                messages.success(request, f"Welcome back, {user.username}!")
+                return redirect('home')
             else:
                 messages.error(request, "Invalid email or password.")
         
@@ -157,11 +155,9 @@ def watchlist_view(request):
 def profile_view(request):
     try:
         watch_count = WatchHistory.objects.filter(user=request.user).count()
-        payment = Payment.objects.filter(user=request.user).order_by('-created_at').first()
         return render(request, 'home/profile.html', {
             'user': request.user,
             'watch_count': watch_count,
-            'payment': payment,
         })
     except Exception as e:
         logger.error(f"Error in profile_view: {str(e)}")
@@ -350,128 +346,3 @@ def search_movies_api(request):
         }, status=500)
 
 
-@login_required(login_url='/')
-def verify_payment_status(request, transaction_uuid):
-    """Manual payment verification endpoint"""
-    try:
-        payment = Payment.objects.get(transaction_id=transaction_uuid, user=request.user)
-        
-        if payment.status == 'completed':
-            return JsonResponse({'status': 'success', 'message': 'Payment already completed'})
-        
-        # Check with eSewa
-        esewa_status, ref_id = check_esewa_payment_status(transaction_uuid, str(payment.amount))
-        
-        if esewa_status == 'COMPLETE':
-            payment.status = 'completed'
-            payment.esewa_ref_id = ref_id
-            payment.save()
-            return JsonResponse({'status': 'success', 'message': 'Payment verified and completed'})
-        elif esewa_status in ['PENDING', 'AMBIGUOUS']:
-            return JsonResponse({'status': 'pending', 'message': 'Payment is still processing'})
-        else:
-            return JsonResponse({'status': 'failed', 'message': 'Payment verification failed'})
-            
-    except Payment.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Payment not found'})
-    except Exception as e:
-        logger.error(f"Payment verification error: {e}")
-        return JsonResponse({'status': 'error', 'message': 'Verification failed'})
-
-
-@login_required(login_url='/')
-def payment_view(request):
-    # Check if user already has active payment
-    active_payment = Payment.objects.filter(
-        user=request.user,
-        status='completed'
-    ).first()
-    
-    if active_payment:
-        return redirect('home')
-    
-    if request.method == 'POST':
-        payment_method = request.POST.get('payment_method')
-        
-        if payment_method == 'esewa':
-            # Create payment record for eSewa
-            transaction_uuid = str(uuid.uuid4())
-            payment = Payment.objects.create(
-                user=request.user,
-                transaction_id=transaction_uuid,
-                amount=500.00
-            )
-            
-            # Generate signature
-            signature = generate_esewa_signature('500', transaction_uuid, ESEWA_MERCHANT_CODE)
-            
-            # eSewa form data
-            esewa_config = {
-                'amount': '500',
-                'tax_amount': '0',
-                'total_amount': '500',
-                'transaction_uuid': transaction_uuid,
-                'product_code': ESEWA_MERCHANT_CODE,
-                'product_service_charge': '0',
-                'product_delivery_charge': '0',
-                'success_url': request.build_absolute_uri('/payment/success/'),
-                'failure_url': request.build_absolute_uri('/payment/failure/'),
-                'signed_field_names': 'total_amount,transaction_uuid,product_code',
-                'signature': signature,
-                'esewa_url': ESEWA_SANDBOX_URL
-            }
-            
-            return render(request, 'home/payment_redirect.html', {
-                'payment': payment,
-                'esewa_config': esewa_config
-            })
-    
-    return render(request, 'home/payment.html')
-
-
-def payment_success_view(request):
-    # Get response data from eSewa
-    data = request.GET.get('data')
-    
-    if data:
-        try:
-            # Decode base64 response
-            decoded_data = base64.b64decode(data).decode('utf-8')
-            response_data = json.loads(decoded_data)
-            
-            transaction_uuid = response_data.get('transaction_uuid')
-            status = response_data.get('status')
-            
-            if transaction_uuid and status == 'COMPLETE':
-                payment = Payment.objects.get(transaction_id=transaction_uuid)
-                payment.status = 'completed'
-                payment.esewa_ref_id = response_data.get('transaction_code', '')
-                payment.save()
-                
-                messages.success(request, 'Payment successful! You now have access to all movies.')
-                return redirect('home')
-        except (Payment.DoesNotExist, json.JSONDecodeError, Exception) as e:
-            logger.error(f"Payment verification failed: {e}")
-            messages.error(request, 'Payment verification failed.')
-    
-    # Fallback for old format
-    transaction_id = request.GET.get('oid')
-    if transaction_id:
-        try:
-            payment = Payment.objects.get(transaction_id=transaction_id)
-            payment.status = 'completed'
-            payment.esewa_ref_id = request.GET.get('refId', f'esewa_ref_{transaction_id[:8]}')
-            payment.save()
-            
-            messages.success(request, 'Payment successful! You now have access to all movies.')
-            return redirect('home')
-        except Payment.DoesNotExist:
-            messages.error(request, 'Payment verification failed.')
-    
-    # No success message here - only redirect if no valid payment found
-    return redirect('payment')
-
-
-def payment_failure_view(request):
-    messages.error(request, 'Payment failed. Please try again.')
-    return redirect('payment')

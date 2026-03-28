@@ -154,31 +154,7 @@
     font-weight: 500;
   }
 
-  /* Payment Status */
-  .payment-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.35rem 0.9rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-  }
-  .payment-badge.active   { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
-  .payment-badge.expired  { background: rgba(251,191,36,0.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
-  .payment-badge.pending  { background: rgba(96,165,250,0.15);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
-  .payment-badge.none     { background: rgba(156,163,175,0.15); color: #9ca3af; border: 1px solid rgba(156,163,175,0.3); }
-  .payment-badge.failed   { background: rgba(229,9,20,0.15);    color: #e50914; border: 1px solid rgba(229,9,20,0.3); }
-
-  .payment-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  @media (max-width: 768px) {
+@media (max-width: 768px) {
     .profile-container {
       padding: 0 1rem;
     }
@@ -283,55 +259,5 @@
     </div>
   </div>
 
-  <!-- Payment Status Section -->
-  <div class="profile-section">
-    <h2 class="section-title">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-        <line x1="1" y1="10" x2="23" y2="10"></line>
-      </svg>
-      Subscription Status
-    </h2>
-    <div class="info-grid">
-      <div class="info-item">
-        <div class="info-label">Status</div>
-        <div class="info-value">
-          {% if not payment %}
-            <span class="payment-badge none"><span class="payment-dot"></span>No Subscription</span>
-          {% elif payment.is_active %}
-            <span class="payment-badge active"><span class="payment-dot"></span>Active</span>
-          {% elif payment.status == 'pending' %}
-            <span class="payment-badge pending"><span class="payment-dot"></span>Pending</span>
-          {% elif payment.status == 'failed' %}
-            <span class="payment-badge failed"><span class="payment-dot"></span>Failed</span>
-          {% else %}
-            <span class="payment-badge expired"><span class="payment-dot"></span>Expired</span>
-          {% endif %}
-        </div>
-      </div>
-      {% if payment %}
-      <div class="info-item">
-        <div class="info-label">Amount Paid</div>
-        <div class="info-value">Rs. {{ payment.amount }}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Payment Date</div>
-        <div class="info-value">{{ payment.created_at|date:"F d, Y" }}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Expires On</div>
-        <div class="info-value">{{ payment.expires_at|date:"F d, Y" }}</div>
-      </div>
-      {% endif %}
-      {% if not payment or not payment.is_active %}
-      <div class="info-item">
-        <div class="info-label">Access</div>
-        <div class="info-value">
-          <a href="{% url 'payment' %}" style="color:#e50914; text-decoration:none; font-weight:600;">Subscribe Now →</a>
-        </div>
-      </div>
-      {% endif %}
-    </div>
-  </div>
 </div>
 {% endblock %}

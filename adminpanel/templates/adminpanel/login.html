@@ -169,13 +169,13 @@
             <p>Admin Panel Access</p>
         </div>
         
-        {% if messages %}
-            {% for message in messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
                 <div class="error-message">
                     {{ message }}
                 </div>
-            {% endfor %}
-        {% endif %}
+            {% endif %}
+        {% endfor %}
         
         <form method="post">
             {% csrf_token %}

@@ -170,32 +170,30 @@ def user_profile(request, user_id):
         'reviews_count': reviews_count
     })
 
+
 @staff_member_required
 def manage_payments(request):
-    """Manage all payments with user information"""
     from home.models import Payment
-    from django.db.models import Sum, Count, Q
-    
+    from django.db.models import Sum
+
     payments = Payment.objects.select_related('user').order_by('-created_at')
-    
-    # Calculate statistics
+
     total_revenue = Payment.objects.filter(status='completed').aggregate(Sum('amount'))['amount__sum'] or 0
     completed_payments = Payment.objects.filter(status='completed').count()
     pending_payments = Payment.objects.filter(status='pending').count()
     failed_payments = Payment.objects.filter(status='failed').count()
-    
-    # Pagination
+
     paginator = Paginator(payments, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     return render(request, 'adminpanel/manage_payments.html', {
         'page_obj': page_obj,
         'payments': page_obj,
         'total_revenue': total_revenue,
         'completed_payments': completed_payments,
         'pending_payments': pending_payments,
-        'failed_payments': failed_payments
+        'failed_payments': failed_payments,
     })
 
 

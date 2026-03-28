@@ -22,7 +22,7 @@ from django.shortcuts import redirect
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('home.urls')),  # Home page is now login
+    path('', include('home.urls')),
     path('adminpanel/', include('adminpanel.urls')),
-    path('movies/', include('movies.urls')), 
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('movies/', include('movies.urls')),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
