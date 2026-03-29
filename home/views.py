@@ -4,13 +4,35 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, StreamingHttpResponse, HttpResponse
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
 from .forms import CustomUserCreationForm
+from .models import Payment
 from movies.models import Movie, Watchlist, WatchHistory, UserInteraction
 import logging
 import os
 import mimetypes
+import uuid
+import hashlib
+import hmac
+import base64
+import json
+import requests
 
 logger = logging.getLogger(__name__)
+
+# -----------------------------------------------------------------------
+# eSewa v2 Sandbox Configuration
+# -----------------------------------------------------------------------
+ESEWA_MERCHANT_CODE  = 'EPAYTEST'
+ESEWA_SECRET_KEY     = '8gBm/:&EnhH.1/q'
+ESEWA_PAYMENT_URL    = 'https://rc-epay.esewa.com.np/epay/main'
+ESEWA_STATUS_URL     = 'https://rc.esewa.com.np/api/epay/transaction/status/'
+SUBSCRIPTION_AMOUNT  = '500'
+
+# For local dev set this to your ngrok URL e.g. 'https://xxxx.ngrok.io'
+# Leave None in production — request.build_absolute_uri is used automatically
+ESEWA_CALLBACK_BASE  = None
+# -----------------------------------------------------------------------
 
 
 def video_stream(request, path):
@@ -78,8 +100,8 @@ def register_view(request):
             if form.is_valid():
                 user = form.save()
                 login(request, user)
-                messages.success(request, "Account created successfully!")
-                return redirect('home')
+                messages.success(request, "Account created successfully! Please complete payment to access movies.")
+                return redirect('payment')
             else:
                 return render(request, 'home/register.html', {'form': form})
         else:
@@ -94,21 +116,26 @@ def register_view(request):
 # Login
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('home')
-    
+        has_payment = Payment.objects.filter(user=request.user, status='completed').exists()
+        return redirect('home') if has_payment else redirect('payment')
+
     try:
         if request.method == 'POST':
             username = request.POST.get('username')
             password = request.POST.get('password')
-            
+
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
-                messages.success(request, f"Welcome back, {user.username}!")
-                return redirect('home')
+                has_payment = Payment.objects.filter(user=user, status='completed').exists()
+                if has_payment:
+                    messages.success(request, f"Welcome back, {user.username}!")
+                    return redirect('home')
+                else:
+                    return redirect('payment')
             else:
-                messages.error(request, "Invalid email or password.")
-        
+                messages.error(request, "Invalid username or password.")
+
         return render(request, 'home/login.html')
     except Exception as e:
         logger.error(f"Error in login_view: {str(e)}")
@@ -346,3 +373,181 @@ def search_movies_api(request):
         }, status=500)
 
 
+
+# -----------------------------------------------------------------------
+# eSewa Helper Functions
+# -----------------------------------------------------------------------
+
+def _generate_signature(total_amount, transaction_uuid, product_code):
+    """HMAC-SHA256 signature required by eSewa v2."""
+    message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
+    sig = hmac.new(
+        ESEWA_SECRET_KEY.encode('utf-8'),
+        message.encode('utf-8'),
+        hashlib.sha256
+    ).digest()
+    return base64.b64encode(sig).decode('utf-8')
+
+
+def _callback_base(request):
+    """Return the base URL for eSewa callbacks."""
+    if ESEWA_CALLBACK_BASE:
+        return ESEWA_CALLBACK_BASE.rstrip('/')
+    return request.build_absolute_uri('/').rstrip('/')
+
+
+def _check_esewa_status(transaction_uuid, total_amount):
+    """Query eSewa v2 status API. Returns (status_str, ref_id)."""
+    try:
+        url = (
+            f"{ESEWA_STATUS_URL}"
+            f"?product_code={ESEWA_MERCHANT_CODE}"
+            f"&total_amount={total_amount}"
+            f"&transaction_uuid={transaction_uuid}"
+        )
+        resp = requests.get(url, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            return data.get('status'), data.get('ref_id')
+    except Exception as e:
+        logger.error(f"eSewa status check error: {e}")
+    return None, None
+
+
+# -----------------------------------------------------------------------
+# Payment Views
+# -----------------------------------------------------------------------
+
+@login_required(login_url='/')
+def payment_view(request):
+    # Already paid — go straight to dashboard
+    if Payment.objects.filter(user=request.user, status='completed').exists():
+        return redirect('home')
+
+    if request.method == 'POST':
+        transaction_uuid = str(uuid.uuid4())
+
+        Payment.objects.create(
+            user=request.user,
+            transaction_id=transaction_uuid,
+            amount=SUBSCRIPTION_AMOUNT,
+        )
+
+        signature = _generate_signature(SUBSCRIPTION_AMOUNT, transaction_uuid, ESEWA_MERCHANT_CODE)
+        base = _callback_base(request)
+
+        esewa_config = {
+            'amount':                   SUBSCRIPTION_AMOUNT,
+            'tax_amount':               '0',
+            'total_amount':             SUBSCRIPTION_AMOUNT,
+            'transaction_uuid':         transaction_uuid,
+            'product_code':             ESEWA_MERCHANT_CODE,
+            'product_service_charge':   '0',
+            'product_delivery_charge':  '0',
+            'success_url':              f"{base}/payment/success/",
+            'failure_url':              f"{base}/payment/failure/",
+            'signed_field_names':       'total_amount,transaction_uuid,product_code',
+            'signature':                signature,
+            'esewa_url':                ESEWA_PAYMENT_URL,
+        }
+
+        return render(request, 'home/payment_redirect.html', {'esewa_config': esewa_config})
+
+    return render(request, 'home/payment.html')
+
+
+@csrf_exempt
+def payment_success_view(request):
+    """
+    eSewa v2 redirects here with ?data=<base64-encoded-json> after payment.
+    """
+    raw = request.GET.get('data') or request.POST.get('data')
+
+    if raw:
+        try:
+            response_data = json.loads(base64.b64decode(raw).decode('utf-8'))
+            transaction_uuid = response_data.get('transaction_uuid')
+            status           = response_data.get('status')
+            ref_id           = response_data.get('transaction_code', '')
+
+            if not transaction_uuid:
+                raise ValueError("Missing transaction_uuid in eSewa response")
+
+            try:
+                payment = Payment.objects.get(transaction_id=transaction_uuid)
+            except Payment.DoesNotExist:
+                logger.error(f"No payment record for transaction_uuid={transaction_uuid}")
+                messages.error(request, 'Payment record not found. Please contact support.')
+                return redirect('payment')
+
+            if status == 'COMPLETE':
+                payment.status       = 'completed'
+                payment.esewa_ref_id = ref_id
+                payment.save()
+
+                # Re-authenticate user if session was lost during eSewa redirect
+                if not request.user.is_authenticated:
+                    user = payment.user
+                    user.backend = 'django.contrib.auth.backends.ModelBackend'
+                    login(request, user)
+
+                messages.success(request, 'Payment successful! Enjoy unlimited streaming.')
+                return redirect('home')
+
+            else:
+                # Status is not COMPLETE — double-check with eSewa API
+                esewa_status, api_ref = _check_esewa_status(transaction_uuid, SUBSCRIPTION_AMOUNT)
+                if esewa_status == 'COMPLETE':
+                    payment.status       = 'completed'
+                    payment.esewa_ref_id = api_ref or ref_id
+                    payment.save()
+                    messages.success(request, 'Payment verified. Enjoy unlimited streaming.')
+                    return redirect('home')
+
+                payment.status = 'failed'
+                payment.save()
+                messages.error(request, f'Payment not completed (status: {status}). Please try again.')
+                return redirect('payment')
+
+        except Exception as e:
+            logger.error(f"payment_success_view error: {e}")
+            messages.error(request, 'Payment verification failed. Please contact support.')
+            return redirect('payment')
+
+    messages.error(request, 'Invalid payment response received.')
+    return redirect('payment')
+
+
+@csrf_exempt
+def payment_failure_view(request):
+    messages.error(request, 'Payment was cancelled or failed. Please try again.')
+    return redirect('payment')
+
+
+@login_required(login_url='/')
+def verify_payment_status(request, transaction_uuid):
+    """Manual re-verification endpoint (called by frontend polling if needed)."""
+    try:
+        payment = Payment.objects.get(transaction_id=transaction_uuid, user=request.user)
+
+        if payment.status == 'completed':
+            return JsonResponse({'status': 'success', 'message': 'Payment already completed'})
+
+        esewa_status, ref_id = _check_esewa_status(transaction_uuid, str(payment.amount))
+
+        if esewa_status == 'COMPLETE':
+            payment.status       = 'completed'
+            payment.esewa_ref_id = ref_id
+            payment.save()
+            return JsonResponse({'status': 'success', 'message': 'Payment verified'})
+
+        if esewa_status in ('PENDING', 'AMBIGUOUS'):
+            return JsonResponse({'status': 'pending', 'message': 'Payment still processing'})
+
+        return JsonResponse({'status': 'failed', 'message': 'Payment verification failed'})
+
+    except Payment.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Payment not found'}, status=404)
+    except Exception as e:
+        logger.error(f"verify_payment_status error: {e}")
+        return JsonResponse({'status': 'error', 'message': 'Verification error'}, status=500)

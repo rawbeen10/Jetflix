@@ -164,30 +164,9 @@
     </form>
     
     <script>
-        let redirectAttempted = false;
-        let timeoutId;
-        
-        function attemptRedirect() {
-            if (redirectAttempted) return;
-            redirectAttempted = true;
-            
-            try {
-                document.getElementById('esewaForm').submit();
-            } catch (error) {
-                console.error('Redirect failed:', error);
-                showError();
-            }
-        }
-        
-        function showError() {
-            document.getElementById('errorMessage').classList.add('show');
-            document.getElementById('loader').style.display = 'none';
-            document.querySelector('.redirect-title').textContent = 'Service Unavailable';
-            document.querySelector('.redirect-subtitle').textContent = 'eSewa service is currently unavailable. Please use the demo payment option.';
-        }
-        
-        // Auto-submit after 3 seconds
-        timeoutId = setTimeout(attemptRedirect, 3000);
+        window.onload = function() {
+            document.getElementById('esewaForm').submit();
+        };
     </script>
 </body>
 </html>
