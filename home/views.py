@@ -25,9 +25,11 @@ logger = logging.getLogger(__name__)
 # -----------------------------------------------------------------------
 ESEWA_MERCHANT_CODE  = 'EPAYTEST'
 ESEWA_SECRET_KEY     = '8gBm/:&EnhH.1/q'
-ESEWA_PAYMENT_URL    = 'https://rc-epay.esewa.com.np/epay/main'
+ESEWA_PAYMENT_URL    = 'https://rc.esewa.com.np/api/epay/main/v2/form'
 ESEWA_STATUS_URL     = 'https://rc.esewa.com.np/api/epay/transaction/status/'
 SUBSCRIPTION_AMOUNT  = '500'
+ESEWA_CLIENT_ID      = 'JB0BBQ4aD0UqIThFJwAKBgAXEUkEGQUBBAwdOgABHD4DChwUAB0R'
+ESEWA_CLIENT_SECRET  = 'BhwIWQQADhIYSxILExMcAgFXFhcOBwAKBgAXEQ=='
 
 # For local dev set this to your ngrok URL e.g. 'https://xxxx.ngrok.io'
 # Leave None in production — request.build_absolute_uri is used automatically
@@ -425,7 +427,7 @@ def payment_view(request):
         return redirect('home')
 
     if request.method == 'POST':
-        transaction_uuid = str(uuid.uuid4())
+        transaction_uuid = uuid.uuid4().hex  # no hyphens — eSewa v2 requirement
 
         Payment.objects.create(
             user=request.user,
