@@ -1,7 +1,7 @@
 {% extends 'home/base.html' %}
 {% load static %}
 
-{% block title %}Home - JetFlix{% endblock %}
+{% block title %}Home - JETFLIX{% endblock %}
 
 {% block main_class %}home-page-content{% endblock %}
 
@@ -1045,7 +1045,7 @@
   <section class="hero">
     <div class="hero-content">
       <h1>Unlimited Movies, One Destination</h1>
-      <p>Explore trending movies, personalized recommendations, and your favorite content anytime on JetFlix.</p>
+      <p>Explore trending movies, personalized recommendations, and your favorite content anytime on JETFLIX.</p>
       {% if user.is_authenticated %}
         <button onclick="window.location.href='{% url 'movies:landing' %}'">▶ Watch Now</button>
       {% else %}
@@ -1515,7 +1515,7 @@
       if (movie && movie.video) {
         // Increment view count before playing
         incrementViewCount(currentMovieId);
-        // Use the enhanced JetFlix player from base.html
+        // Use the enhanced JETFLIX player from base.html
         if (typeof openJetflixPlayer === 'function') {
           openJetflixPlayer(movie.video, movie.title);
           closeModal();
@@ -1574,7 +1574,7 @@
     }
 
     function closeVideoPlayer() {
-      // Close enhanced JetFlix player if available
+      // Close enhanced JETFLIX player if available
       if (typeof closeJetflixPlayer === 'function') {
         closeJetflixPlayer();
       } else {
