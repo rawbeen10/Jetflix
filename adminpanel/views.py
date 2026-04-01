@@ -69,8 +69,13 @@ def all_movies(request):
     if language_id:
         movies = movies.filter(language__id=language_id)
 
+    paginator = Paginator(movies, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, 'adminpanel/all_movies.html', {
-        'movies': movies,
+        'movies': page_obj,
+        'page_obj': page_obj,
         'genres': Genre.objects.all().order_by('name'),
         'languages': Language.objects.all().order_by('name'),
         'selected_genre': genre_id,
