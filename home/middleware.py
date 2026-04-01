@@ -19,6 +19,12 @@ class PaymentRequiredMiddleware:
             '/static/',
             '/media/',
             '/verify-payment/',
+            '/faq/',
+            '/privacy/',
+            '/terms/',
+            '/help/',
+            '/contact/',
+            '/legal/',
         ]
 
     def _is_exempt(self, path):

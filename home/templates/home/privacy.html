@@ -1,0 +1,15 @@
+{% extends 'home/base.html' %}
+{% block title %}Privacy Policy - JetFlix{% endblock %}
+{% block content %}
+<div style="max-width:800px;margin:60px auto;padding:0 20px;">
+  <h1 style="color:#fff;margin-bottom:8px;">Privacy Policy</h1>
+  <p style="color:#888;margin-bottom:40px;">Last updated: January 2025</p>
+
+  {% for section in sections %}
+  <div style="margin-bottom:32px;">
+    <h2 style="color:#fff;font-size:1.1rem;margin-bottom:10px;">{{ section.title }}</h2>
+    <p style="color:#aaa;font-size:0.9rem;line-height:1.7;">{{ section.body }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

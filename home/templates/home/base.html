@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}JetFlix{% endblock %}</title>
   {% load static %}
+  <link rel="icon" type="image/svg+xml" href="{% static 'home/favicon.svg' %}">
   <link rel="stylesheet" href="{% static 'home/style.css' %}?v={% now 'U' %}">
   {% block extra_css %}{% endblock %}
   <style>
@@ -513,16 +514,16 @@
               <div class="profile-menu-header">
                 <span class="profile-menu-username">{{ user.username }}</span>
               </div>
-              <a href="{% url 'profile' %}" class="profile-menu-item">
+              <a href="{% url 'profile' %}" class="profile-menu-item" onclick="window.location.href='{% url 'profile' %}';return false;">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 Profile
               </a>
-              <a href="{% url 'watch_history' %}" class="profile-menu-item">
+              <a href="{% url 'watch_history' %}" class="profile-menu-item" onclick="window.location.href='{% url 'watch_history' %}';return false;">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
                 Watch History
               </a>
               <div class="profile-menu-divider"></div>
-              <a href="{% url 'logout' %}" class="profile-menu-item profile-menu-logout">
+              <a href="{% url 'logout' %}" class="profile-menu-item profile-menu-logout" onclick="window.location.href='{% url 'logout' %}';return false;">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 Logout
               </a>
@@ -707,27 +708,27 @@
     <div class="footer-container">
       <div class="footer-links">
         <div class="footer-column">
-          <a href="#">FAQ</a>
+          <a href="{% url 'faq' %}">FAQ</a>
           <a href="#">Investor Relations</a>
-          <a href="#">Privacy</a>
+          <a href="{% url 'privacy' %}">Privacy</a>
           <a href="#">Speed Test</a>
         </div>
         <div class="footer-column">
-          <a href="#">Help Center</a>
+          <a href="{% url 'help' %}">Help Center</a>
           <a href="#">Jobs</a>
           <a href="#">Cookie Preferences</a>
-          <a href="#">Legal Notices</a>
+          <a href="{% url 'legal' %}">Legal Notices</a>
         </div>
         <div class="footer-column">
-          <a href="#">Account</a>
+          <a href="{% url 'profile' %}">Account</a>
           <a href="#">Ways to Watch</a>
           <a href="#">Corporate Information</a>
           <a href="#">Only on JetFlix</a>
         </div>
         <div class="footer-column">
           <a href="#">Media Center</a>
-          <a href="#">Terms of Use</a>
-          <a href="#">Contact Us</a>
+          <a href="{% url 'terms' %}">Terms of Use</a>
+          <a href="{% url 'contact' %}">Contact Us</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -1026,7 +1027,6 @@
       document.addEventListener('click', function() {
         menu.style.display = 'none';
       });
-      menu.addEventListener('click', function(e) { e.stopPropagation(); });
     })();
   </script>
   {% endif %}

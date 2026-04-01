@@ -17,4 +17,10 @@ urlpatterns = [
     path('watch_history/', views.watch_history_view, name='watch_history'),
     path('edit_profile/', views.edit_profile_view, name='edit_profile'),
     path('media/<path:path>', views.video_stream, name='video_stream'),
+    path('faq/', views.faq_view, name='faq'),
+    path('privacy/', views.privacy_view, name='privacy'),
+    path('terms/', views.terms_view, name='terms'),
+    path('help/', views.help_view, name='help'),
+    path('contact/', views.contact_view, name='contact'),
+    path('legal/', views.legal_view, name='legal'),
 ]

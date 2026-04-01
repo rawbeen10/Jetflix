@@ -183,10 +183,20 @@ def watchlist_view(request):
 @login_required(login_url='/')
 def profile_view(request):
     try:
+        from movies.models import Favorite, Review
         watch_count = WatchHistory.objects.filter(user=request.user).count()
+        favorites = Favorite.objects.filter(user=request.user).select_related('movie').prefetch_related('movie__genres').order_by('-added_on')
+
+        # Attach user's own review to each favorite
+        fav_list = []
+        for fav in favorites:
+            review = Review.objects.filter(user=request.user, movie=fav.movie).first()
+            fav_list.append({'fav': fav, 'review': review})
+
         return render(request, 'home/profile.html', {
             'user': request.user,
             'watch_count': watch_count,
+            'favorites': fav_list,
         })
     except Exception as e:
         logger.error(f"Error in profile_view: {str(e)}")
@@ -553,3 +563,78 @@ def verify_payment_status(request, transaction_uuid):
     except Exception as e:
         logger.error(f"verify_payment_status error: {e}")
         return JsonResponse({'status': 'error', 'message': 'Verification error'}, status=500)
+
+
+# -----------------------------------------------------------------------
+# Footer Pages
+# -----------------------------------------------------------------------
+
+def faq_view(request):
+    faqs = [
+        ("What is JetFlix?", "JetFlix is a streaming platform where you can watch movies in high definition with no advertisements."),
+        ("How much does it cost?", "JetFlix requires a one-time payment of Rs. 500 for lifetime access to all content."),
+        ("How do I pay?", "We accept payments via eSewa. Click 'Pay with eSewa' on the payment page and follow the steps."),
+        ("Can I watch on multiple devices?", "Yes, you can access JetFlix from any device with a modern web browser."),
+        ("What video quality is available?", "All movies are available in high definition (HD) quality."),
+        ("How do I reset my password?", "Contact us at support@jetflix.com and we'll help you reset your password."),
+        ("Can I download movies?", "Currently JetFlix supports online streaming only. Downloads are not available."),
+        ("How do I add movies to my watchlist?", "Click the bookmark icon on any movie card to add it to your watchlist."),
+    ]
+    return render(request, 'home/faq.html', {'faqs': faqs})
+
+
+def privacy_view(request):
+    sections = [
+        {"title": "1. Information We Collect", "body": "We collect information you provide when registering, such as your username and email address. We also collect usage data such as movies watched and watchlist activity to improve your experience."},
+        {"title": "2. How We Use Your Information", "body": "Your information is used to provide and improve our service, process payments, and communicate with you about your account. We do not sell your personal data to third parties."},
+        {"title": "3. Payment Information", "body": "Payments are processed securely through eSewa. JetFlix does not store your payment credentials. All transactions are encrypted and handled by eSewa's secure payment gateway."},
+        {"title": "4. Cookies", "body": "We use session cookies to keep you logged in and remember your preferences. These cookies are essential for the service to function and do not track you across other websites."},
+        {"title": "5. Data Security", "body": "We implement industry-standard security measures to protect your personal information. Your password is stored as a secure hash and is never accessible in plain text."},
+        {"title": "6. Your Rights", "body": "You have the right to access, update, or delete your personal information at any time. Contact us at support@jetflix.com to exercise these rights."},
+        {"title": "7. Contact", "body": "If you have any questions about this Privacy Policy, please contact us at support@jetflix.com."},
+    ]
+    return render(request, 'home/privacy.html', {'sections': sections})
+
+
+def terms_view(request):
+    sections = [
+        {"title": "1. Acceptance of Terms", "body": "By accessing and using JetFlix, you accept and agree to be bound by these Terms of Use. If you do not agree, please do not use our service."},
+        {"title": "2. Account Registration", "body": "You must register for an account to use JetFlix. You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account."},
+        {"title": "3. Payment", "body": "Access to JetFlix requires a one-time payment of Rs. 500. This grants you lifetime access to all available content. Payments are non-refundable once processed."},
+        {"title": "4. Content Usage", "body": "All content on JetFlix is for personal, non-commercial use only. You may not download, reproduce, distribute, or publicly display any content without prior written permission."},
+        {"title": "5. Prohibited Conduct", "body": "You agree not to use JetFlix for any unlawful purpose, to attempt to gain unauthorized access to any part of the service, or to interfere with the proper functioning of the platform."},
+        {"title": "6. Termination", "body": "We reserve the right to suspend or terminate your account at any time if you violate these terms or engage in conduct harmful to other users or the platform."},
+        {"title": "7. Changes to Terms", "body": "We may update these Terms of Use from time to time. Continued use of JetFlix after changes constitutes acceptance of the new terms."},
+    ]
+    return render(request, 'home/terms.html', {'sections': sections})
+
+
+def help_view(request):
+    topics = [
+        {"title": "Getting Started", "body": "Create an account, complete your one-time payment, and start watching immediately. No subscription required."},
+        {"title": "Payment Issues", "body": "If your payment failed, check your eSewa balance and try again. Contact us if the issue persists."},
+        {"title": "Video Playback", "body": "For the best experience use a modern browser like Chrome or Firefox. Make sure your internet connection is stable."},
+        {"title": "Account Settings", "body": "Update your username, email, and other details from your Profile page accessible via the top navigation."},
+        {"title": "Watchlist", "body": "Save movies to your watchlist by clicking the bookmark icon. Access your watchlist from the navigation bar."},
+        {"title": "Watch History", "body": "Your recently watched movies are saved automatically. View them from the dropdown menu under your profile."},
+    ]
+    return render(request, 'home/help.html', {'topics': topics})
+
+
+def contact_view(request):
+    sent = False
+    if request.method == 'POST':
+        # In production connect this to an email backend
+        sent = True
+    return render(request, 'home/contact.html', {'sent': sent})
+
+
+def legal_view(request):
+    sections = [
+        {"title": "Copyright Notice", "body": "All content, trademarks, and intellectual property on JetFlix are the property of their respective owners. JetFlix does not claim ownership of any third-party content displayed on the platform."},
+        {"title": "Disclaimer of Warranties", "body": "JetFlix is provided 'as is' without warranties of any kind. We do not guarantee uninterrupted or error-free service and are not liable for any damages arising from use of the platform."},
+        {"title": "Limitation of Liability", "body": "To the maximum extent permitted by law, JetFlix shall not be liable for any indirect, incidental, or consequential damages arising out of your use of the service."},
+        {"title": "Governing Law", "body": "These terms are governed by the laws of Nepal. Any disputes shall be resolved in the courts of Kathmandu, Nepal."},
+        {"title": "Third-Party Services", "body": "JetFlix uses eSewa for payment processing. Use of eSewa is subject to eSewa's own terms and privacy policy."},
+    ]
+    return render(request, 'home/legal.html', {'sections': sections})

@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import F
-from .models import Movie, Watchlist, Review, WatchHistory, UserInteraction
+from .models import Movie, Watchlist, Review, WatchHistory, UserInteraction, Favorite
 import json
 
 def landing_page(request):
@@ -442,3 +442,25 @@ def video_player(request, movie_id):
     return render(request, 'movies/player.html', {
         'movie': movie
     })
+
+
+@login_required
+@require_POST
+def toggle_favorite(request):
+    try:
+        data = json.loads(request.body)
+        movie_id = data.get('movie_id')
+        movie = get_object_or_404(Movie, id=movie_id)
+        fav, created = Favorite.objects.get_or_create(user=request.user, movie=movie)
+        if not created:
+            fav.delete()
+            return JsonResponse({'status': 'success', 'action': 'removed'})
+        return JsonResponse({'status': 'success', 'action': 'added'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+
+@login_required
+def check_favorite(request, movie_id):
+    is_fav = Favorite.objects.filter(user=request.user, movie_id=movie_id).exists()
+    return JsonResponse({'is_favorite': is_fav})

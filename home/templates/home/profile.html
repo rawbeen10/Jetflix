@@ -223,6 +223,10 @@
         <div class="stat-value">{{ watch_count }}</div>
       </div>
       <div class="stat-card">
+        <div class="stat-label">Favorites</div>
+        <div class="stat-value">{{ favorites|length }}</div>
+      </div>
+      <div class="stat-card">
         <div class="stat-label">Member Since</div>
         <div class="stat-value">{{ user.date_joined|date:"M Y" }}</div>
       </div>
@@ -259,5 +263,160 @@
     </div>
   </div>
 
+  <div class="profile-section">
+    <h2 class="section-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="#e50914" stroke="#e50914" stroke-width="2">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+      Favorites
+    </h2>
+    {% if favorites %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;">
+      {% for item in favorites %}
+      <div style="background:#1e1e1e;border:1px solid #2a2a2a;border-radius:8px;overflow:hidden;cursor:pointer;" onclick="showFavDetail({{ forloop.counter0 }})">
+        {% if item.fav.movie.thumbnail %}
+        <img src="{{ item.fav.movie.thumbnail.url }}" alt="{{ item.fav.movie.title }}" style="width:100%;height:110px;object-fit:cover;">
+        {% endif %}
+        <div style="padding:10px;">
+          <div style="color:#fff;font-size:0.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ item.fav.movie.title }}</div>
+          <div style="color:#888;font-size:0.75rem;margin-top:4px;">{{ item.fav.movie.year }}</div>
+          {% if item.review %}
+          <div style="color:#e50914;font-size:0.75rem;margin-top:2px;">Your rating: {{ item.review.rating }}★</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color:#666;font-size:0.9rem;">No favorites yet. Click the ♥ heart on any movie to save it here.</p>
+    {% endif %}
+  </div>
+
 </div>
+
+<div id="favModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;justify-content:center;align-items:flex-start;padding:40px 20px;overflow-y:auto;">
+  <div style="background:#181818;border-radius:12px;max-width:700px;width:100%;position:relative;">
+    <button onclick="closeFavModal()" style="position:absolute;top:16px;right:16px;background:#333;border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;z-index:10;">&times;</button>
+    <img id="favModalThumb" src="" alt="" style="width:100%;height:320px;object-fit:cover;border-radius:12px 12px 0 0;">
+    <div style="padding:28px;">
+      <h2 id="favModalTitle" style="color:#fff;font-size:1.6rem;margin-bottom:6px;"></h2>
+      <div style="color:#888;font-size:0.85rem;margin-bottom:16px;">
+        <span id="favModalYear"></span> &bull;
+        <span style="color:#46d369;">&#9733; <span id="favModalRating"></span></span>
+      </div>
+      <p id="favModalDesc" style="color:#ccc;font-size:0.9rem;line-height:1.7;margin-bottom:20px;"></p>
+
+      <!-- User's own review -->
+      <div id="favModalReviewBox" style="display:none;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:8px;padding:16px;margin-bottom:20px;">
+        <div style="font-size:0.8rem;color:#888;margin-bottom:6px;">Your Review</div>
+        <div style="color:#e50914;font-size:1rem;margin-bottom:6px;"><span id="favModalUserRating"></span></div>
+        <p id="favModalUserComment" style="color:#ccc;font-size:0.875rem;line-height:1.6;margin:0;"></p>
+      </div>
+
+      <div style="font-size:0.85rem;color:#888;display:grid;gap:8px;margin-bottom:24px;">
+        <div><span style="color:#555;min-width:80px;display:inline-block;">Cast:</span> <span id="favModalCast" style="color:#ccc;"></span></div>
+        <div><span style="color:#555;min-width:80px;display:inline-block;">Genres:</span> <span id="favModalGenres" style="color:#ccc;"></span></div>
+        <div><span style="color:#555;min-width:80px;display:inline-block;">Language:</span> <span id="favModalLang" style="color:#ccc;"></span></div>
+      </div>
+
+      <button id="favModalRemoveBtn" onclick="removeFavorite()" style="padding:10px 20px;background:rgba(229,9,20,0.15);border:1px solid #e50914;border-radius:6px;color:#e50914;font-size:0.875rem;font-weight:600;cursor:pointer;transition:background 0.2s;"
+        onmouseover="this.style.background='rgba(229,9,20,0.3)'" onmouseout="this.style.background='rgba(229,9,20,0.15)'">
+        &#9825; Remove from Favorites
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentFavIndex = null;
+
+const favData = [
+  {% for item in favorites %}
+  {
+    id: {{ item.fav.movie.id }},
+    title: "{{ item.fav.movie.title|escapejs }}",
+    year: {{ item.fav.movie.year }},
+    rating: {{ item.fav.movie.review_stars|default:"0.0" }},
+    description: "{{ item.fav.movie.description|escapejs }}",
+    thumbnail: "{% if item.fav.movie.thumbnail %}{{ item.fav.movie.thumbnail.url }}{% endif %}",
+    cast: "{{ item.fav.movie.cast|escapejs }}",
+    genres: "{{ item.fav.movie.get_genres_display|escapejs }}",
+    language: "{% if item.fav.movie.language %}{{ item.fav.movie.language.name }}{% else %}Unknown{% endif %}",
+    userRating: {% if item.review %}{{ item.review.rating }}{% else %}null{% endif %},
+    userComment: {% if item.review %}"{{ item.review.review_text|escapejs }}"{% else %}null{% endif %}
+  }{% if not forloop.last %},{% endif %}
+  {% endfor %}
+];
+
+function showFavDetail(i) {
+  currentFavIndex = i;
+  const m = favData[i];
+  document.getElementById('favModalThumb').src = m.thumbnail;
+  document.getElementById('favModalTitle').textContent = m.title;
+  document.getElementById('favModalYear').textContent = m.year;
+  document.getElementById('favModalRating').textContent = m.rating;
+  document.getElementById('favModalDesc').textContent = m.description || 'No description available.';
+  document.getElementById('favModalCast').textContent = m.cast || 'Unknown';
+  document.getElementById('favModalGenres').textContent = m.genres || 'Unknown';
+  document.getElementById('favModalLang').textContent = m.language;
+
+  const reviewBox = document.getElementById('favModalReviewBox');
+  if (m.userRating) {
+    document.getElementById('favModalUserRating').textContent = '★'.repeat(m.userRating) + '☆'.repeat(5 - m.userRating) + ' (' + m.userRating + '/5)';
+    document.getElementById('favModalUserComment').textContent = m.userComment || 'No comment.';
+    reviewBox.style.display = 'block';
+  } else {
+    reviewBox.style.display = 'none';
+  }
+
+  document.getElementById('favModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeFavModal() {
+  document.getElementById('favModal').style.display = 'none';
+  document.body.style.overflow = 'auto';
+  currentFavIndex = null;
+}
+
+function removeFavorite() {
+  if (currentFavIndex === null) return;
+  const movieId = favData[currentFavIndex].id;
+
+  fetch('/movies/api/favorites/toggle/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+    body: JSON.stringify({ movie_id: movieId })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'success') {
+      closeFavModal();
+      // Remove card from grid
+      const cards = document.querySelectorAll('[onclick^="showFavDetail"]');
+      cards[currentFavIndex].closest('div[style*="border-radius:8px"]').remove();
+      favData.splice(currentFavIndex, 1);
+      // Reindex onclick attributes
+      document.querySelectorAll('[onclick^="showFavDetail"]').forEach((el, idx) => {
+        el.setAttribute('onclick', 'showFavDetail(' + idx + ')');
+      });
+    }
+  })
+  .catch(console.error);
+}
+
+function getCsrfToken() {
+  const c = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='));
+  return c ? c.trim().split('=')[1] : '';
+}
+
+document.getElementById('favModal').addEventListener('click', function(e) {
+  if (e.target === this) closeFavModal();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeFavModal();
+});
+</script>
+
 {% endblock %}

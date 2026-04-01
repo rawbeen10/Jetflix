@@ -1,0 +1,35 @@
+{% extends 'home/base.html' %}
+{% block title %}Contact Us - JetFlix{% endblock %}
+{% block content %}
+<div style="max-width:600px;margin:60px auto;padding:0 20px;">
+  <h1 style="color:#fff;margin-bottom:8px;">Contact Us</h1>
+  <p style="color:#888;margin-bottom:40px;">We'd love to hear from you.</p>
+
+  {% if sent %}
+  <div style="background:rgba(70,211,105,0.1);border:1px solid #46d369;border-radius:8px;padding:16px;color:#46d369;margin-bottom:24px;">
+    Message sent! We'll get back to you within 24 hours.
+  </div>
+  {% endif %}
+
+  <form method="post" style="display:flex;flex-direction:column;gap:16px;">
+    {% csrf_token %}
+    <div>
+      <label style="color:#aaa;font-size:0.85rem;display:block;margin-bottom:6px;">Name</label>
+      <input type="text" name="name" required style="width:100%;padding:12px;background:#1e1e1e;border:1px solid #333;border-radius:6px;color:#fff;font-size:0.9rem;">
+    </div>
+    <div>
+      <label style="color:#aaa;font-size:0.85rem;display:block;margin-bottom:6px;">Email</label>
+      <input type="email" name="email" required style="width:100%;padding:12px;background:#1e1e1e;border:1px solid #333;border-radius:6px;color:#fff;font-size:0.9rem;">
+    </div>
+    <div>
+      <label style="color:#aaa;font-size:0.85rem;display:block;margin-bottom:6px;">Message</label>
+      <textarea name="message" rows="5" required style="width:100%;padding:12px;background:#1e1e1e;border:1px solid #333;border-radius:6px;color:#fff;font-size:0.9rem;resize:vertical;"></textarea>
+    </div>
+    <button type="submit" style="padding:12px;background:#e50914;border:none;border-radius:6px;color:#fff;font-size:0.95rem;font-weight:600;cursor:pointer;">Send Message</button>
+  </form>
+
+  <div style="margin-top:40px;padding-top:24px;border-top:1px solid #2a2a2a;">
+    <p style="color:#888;font-size:0.85rem;">Or reach us directly at <a href="mailto:support@jetflix.com" style="color:#e50914;">support@jetflix.com</a></p>
+  </div>
+</div>
+{% endblock %}

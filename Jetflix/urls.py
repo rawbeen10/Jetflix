@@ -25,4 +25,4 @@ urlpatterns = [
     path('', include('home.urls')),
     path('adminpanel/', include('adminpanel.urls')),
     path('movies/', include('movies.urls')),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]

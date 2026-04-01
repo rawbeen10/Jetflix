@@ -19,4 +19,6 @@ urlpatterns = [
     path('api/recommendations/similar/<int:movie_id>/', views.get_similar_movies, name='get_similar_movies'),
     path('api/recommendations/user/', views.get_user_recommendations, name='get_user_recommendations'),
     path('api/user/<int:user_id>/', views.get_user_profile, name='get_user_profile'),
+    path('api/favorites/toggle/', views.toggle_favorite, name='toggle_favorite'),
+    path('api/favorites/check/<int:movie_id>/', views.check_favorite, name='check_favorite'),
 ]
