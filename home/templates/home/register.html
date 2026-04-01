@@ -205,10 +205,14 @@
             <h1 class="card-title">Create Account</h1>
             <p class="card-subtitle">Join Jetflix and start watching</p>
 
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="error-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
             {% if form.non_field_errors %}
-                <div class="error-message">
-                    {{ form.non_field_errors }}
-                </div>
+                <div class="error-message">{{ form.non_field_errors.0 }}</div>
             {% endif %}
 
             <form method="post">

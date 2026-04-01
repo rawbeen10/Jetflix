@@ -58,8 +58,24 @@ def add_movie(request):
 
 @staff_member_required
 def all_movies(request):
-    movies = Movie.objects.all().order_by('-id')
-    return render(request, 'adminpanel/all_movies.html', {'movies': movies})
+    from movies.models import Genre, Language
+    movies = Movie.objects.all().prefetch_related('genres').select_related('language').order_by('-id')
+
+    genre_id = request.GET.get('genre')
+    language_id = request.GET.get('language')
+
+    if genre_id:
+        movies = movies.filter(genres__id=genre_id)
+    if language_id:
+        movies = movies.filter(language__id=language_id)
+
+    return render(request, 'adminpanel/all_movies.html', {
+        'movies': movies,
+        'genres': Genre.objects.all().order_by('name'),
+        'languages': Language.objects.all().order_by('name'),
+        'selected_genre': genre_id,
+        'selected_language': language_id,
+    })
 
 @staff_member_required
 def edit_movie(request, movie_id):
