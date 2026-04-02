@@ -1034,6 +1034,11 @@
         <button class="btn btn-secondary" id="watchlistBtn" onclick="toggleWatchlist()">
           <span id="watchlistBtnIcon">+</span> <span id="watchlistBtnText">My List</span>
         </button>
+        <button class="btn btn-secondary" id="favoriteBtn" onclick="toggleFavorite()" style="padding: 12px 16px; min-width: unset;" title="Add to Favorites">
+          <svg id="heartIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
       </div>
 
       <p class="modal-description" id="modalDescription">
@@ -1156,6 +1161,7 @@
 
   // User's watchlist IDs
   let userWatchlistIds = {{ user_watchlist_ids|default:"[]"|safe }};
+  let userFavoriteIds  = {{ user_favorite_ids|default:"[]"|safe }};
 
   let currentRating = 0;
   let currentMovieId = null;
@@ -1189,6 +1195,7 @@
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
     updateWatchlistBtn(movie.id);
+    updateFavoriteBtn(movie.id);
     loadReviews(movie.id);
     
     // Load recommendations
@@ -1379,6 +1386,39 @@
         syncCardButtons();
       } else {
         showNotification('Error removing movie', 'error');
+      }
+    })
+    .catch(() => showNotification('An error occurred', 'error'));
+  }
+
+  function updateFavoriteBtn(movieId) {
+    const btn  = document.getElementById('favoriteBtn');
+    const icon = document.getElementById('heartIcon');
+    if (!btn || !icon) return;
+    const isFav = userFavoriteIds.includes(movieId);
+    icon.style.fill   = isFav ? '#e50914' : 'none';
+    icon.style.stroke = isFav ? '#e50914' : 'currentColor';
+    btn.title = isFav ? 'Remove from Favorites' : 'Add to Favorites';
+  }
+
+  function toggleFavorite() {
+    if (!currentMovieId) return;
+    fetch("{% url 'movies:toggle_favorite' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify({ movie_id: currentMovieId })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') {
+        if (data.action === 'added') {
+          userFavoriteIds.push(currentMovieId);
+          showNotification('Added to Favorites!', 'success');
+        } else {
+          userFavoriteIds = userFavoriteIds.filter(id => id !== currentMovieId);
+          showNotification('Removed from Favorites', 'info');
+        }
+        updateFavoriteBtn(currentMovieId);
       }
     })
     .catch(() => showNotification('An error occurred', 'error'));

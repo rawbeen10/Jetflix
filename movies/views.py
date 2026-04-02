@@ -12,9 +12,13 @@ def landing_page(request):
     
     # Get user's watchlist IDs if logged in
     user_watchlist_ids = []
+    user_favorite_ids = []
     if request.user.is_authenticated:
         user_watchlist_ids = list(
             Watchlist.objects.filter(user=request.user).values_list('movie_id', flat=True)
+        )
+        user_favorite_ids = list(
+            Favorite.objects.filter(user=request.user).values_list('movie_id', flat=True)
         )
     
     # Get genres with movie counts
@@ -33,6 +37,7 @@ def landing_page(request):
     return render(request, 'movies/landing.html', {
         'movies': movies,
         'user_watchlist_ids': user_watchlist_ids,
+        'user_favorite_ids': user_favorite_ids,
         'genres': genres,
         'languages': languages
     })
@@ -41,10 +46,11 @@ def landing_page(request):
 def watchlist_page(request):
     watchlist_items = Watchlist.objects.filter(user=request.user).select_related('movie').prefetch_related('movie__genres', 'movie__language')
     movies = [item.movie for item in watchlist_items]
-    
+    user_favorite_ids = list(Favorite.objects.filter(user=request.user).values_list('movie_id', flat=True))
     return render(request, 'movies/watchlist.html', {
         'movies': movies,
-        'watchlist_count': len(movies)
+        'watchlist_count': len(movies),
+        'user_favorite_ids': user_favorite_ids,
     })
 
 @login_required
@@ -95,10 +101,11 @@ def increment_view(request):
 def watchlist_page(request):
     watchlist_items = Watchlist.objects.filter(user=request.user).select_related('movie')
     movies = [item.movie for item in watchlist_items]
-    
+    user_favorite_ids = list(Favorite.objects.filter(user=request.user).values_list('movie_id', flat=True))
     return render(request, 'movies/watchlist.html', {
         'movies': movies,
-        'watchlist_count': len(movies)
+        'watchlist_count': len(movies),
+        'user_favorite_ids': user_favorite_ids,
     })
 
 @login_required

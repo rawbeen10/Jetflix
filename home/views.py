@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from .forms import CustomUserCreationForm
 from .models import Payment
-from movies.models import Movie, Watchlist, WatchHistory, UserInteraction
+from movies.models import Movie, Watchlist, WatchHistory, UserInteraction, Favorite
 import logging
 import os
 import mimetypes
@@ -309,15 +309,18 @@ def home_page(request):
 def homepage_view(request):
     try:
         user_watchlist_ids = []
+        user_favorite_ids = []
         if request.user.is_authenticated:
-            user_watchlist_ids = list(
-                Watchlist.objects.filter(user=request.user).values_list('movie_id', flat=True)
-            )
-        return render(request, 'home/homepage.html', {'user_watchlist_ids': user_watchlist_ids})
+            user_watchlist_ids = list(Watchlist.objects.filter(user=request.user).values_list('movie_id', flat=True))
+            user_favorite_ids = list(Favorite.objects.filter(user=request.user).values_list('movie_id', flat=True))
+        return render(request, 'home/homepage.html', {
+            'user_watchlist_ids': user_watchlist_ids,
+            'user_favorite_ids': user_favorite_ids,
+        })
     except Exception as e:
         logger.error(f"Error in homepage_view: {str(e)}")
         messages.error(request, "Unable to load homepage.")
-        return render(request, 'home/homepage.html', {'user_watchlist_ids': []})
+        return render(request, 'home/homepage.html', {'user_watchlist_ids': [], 'user_favorite_ids': []})
 
 
 
