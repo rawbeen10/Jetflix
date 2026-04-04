@@ -1,46 +1,44 @@
-================================================================================
-  JETFLIX — PSEUDOCODE
-================================================================================
 
-
-────────────────────────────────────────────────────────────────────────────────
-1. JACCARD SIMILARITY  (Collaborative Filtering)
-────────────────────────────────────────────────────────────────────────────────
-
-FUNCTION get_recommendations(target_user):
-
-    user_movies = movies target_user has watched
-
+-----------------Collaborative-Filtering------------------------------
+FUNCTION get_recommendations_for_user(user, limit):
+    
+    user_movies = get all movies user has interacted with
+    
     IF user_movies is empty:
-        RETURN popular movies sorted by rating, views
+        RETURN popular movies sorted by (rating, views)
+    
+    similar_users = find all users who interacted with same movies
+                    count how many movies they have in common
+                    exclude current user
+                    filter only users with >= 1 common movie
+                    sort by most common movies
+                    take top 20
+    
+    IF similar_users is empty:
+        GO TO genre_based_fallback
+    
+    recommended_movies = get movies that similar_users interacted with
+                         exclude movies user already watched
+                         score each movie by how many similar users watched it
+                         sort by (score, rating, views)
+                         take top [limit]
+    
+    IF recommended_movies < limit:
+        GO TO genre_based_fallback to fill remaining slots
+    
+    RETURN recommended_movies
 
-    FOR each other_user:
-        common  = movies watched by BOTH users
-        jaccard = |common| / |user_movies ∪ other_movies|
-        IF jaccard > 0: add to similar_users
+    ---------------Genre-Based-------------------------
 
-    similar_users = SORT by jaccard DESC, TAKE top 20
-
-    FOR each similar_user:
-        FOR each movie they watched NOT in user_movies:
-            candidate_score[movie] += 1
-
-    RETURN top movies by candidate_score DESC
-
-
-────────────────────────────────────────────────────────────────────────────────
-2. GENRE-BASED FILTERING  (Fallback + Search)
-────────────────────────────────────────────────────────────────────────────────
-
-FUNCTION genre_filter(user_movies, selected_genres):
-
-    user_genres = all genres from user_movies
-
-    FOR each published movie NOT already watched:
-        overlap = |movie.genres ∩ user_genres|
-        IF overlap > 0: add to results
-
-    RETURN results sorted by overlap DESC, rating DESC
-
-
-================================================================================
+    FUNCTION genre_based_recommendations(user, user_movies, exclude_ids, limit):
+    
+    user_genres = get all genres from user's watched movies
+    
+    candidates = get all published movies
+                 where movie has at least one genre in user_genres
+                 exclude movies user already watched
+                 exclude movies already in recommended list
+    
+    sort candidates by (rating DESC, views DESC)
+    
+    RETURN top [limit] candidates
