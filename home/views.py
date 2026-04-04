@@ -94,7 +94,10 @@ def video_stream(request, path):
     return response
 
 
-# Home / Register
+# -----------------------------------------------------------------------
+# Auth Views
+# -----------------------------------------------------------------------
+
 def register_view(request):
     try:
         if request.method == 'POST':
@@ -115,7 +118,6 @@ def register_view(request):
         return render(request, 'home/register.html', {'form': CustomUserCreationForm()})
 
 
-# Login
 def login_view(request):
     if request.user.is_authenticated:
         has_payment = Payment.objects.filter(user=request.user, status='completed').exists()
@@ -149,11 +151,85 @@ def logout_view(request):
     try:
         logout(request)
         messages.info(request, "You have been logged out successfully.")
-        return redirect('/')  # Redirect to login page
+        return redirect('/')
     except Exception as e:
         logger.error(f"Error in logout_view: {str(e)}")
         return redirect('/')
 
+
+# -----------------------------------------------------------------------
+# Main Home Page
+# -----------------------------------------------------------------------
+
+def home_page(request):
+    try:
+        recent_movies = Movie.objects.filter(
+            is_published=True
+        ).select_related('language').prefetch_related('genres').order_by('-id')[:8]
+
+        trending_movies = Movie.objects.filter(
+            is_published=True
+        ).select_related('language').prefetch_related('genres').order_by('-views')[:8]
+
+        recommended_movies = []
+        content_based_movies = []
+        is_new_user = False
+        user_watchlist_ids = []
+        user_favorite_ids = []
+
+        if request.user.is_authenticated:
+            user_watchlist_ids = list(
+                Watchlist.objects.filter(user=request.user).values_list('movie_id', flat=True)
+            )
+            user_favorite_ids = list(
+                Favorite.objects.filter(user=request.user).values_list('movie_id', flat=True)
+            )
+
+            interaction_count = UserInteraction.objects.filter(user=request.user).count()
+            if interaction_count < 1:
+                is_new_user = True
+            else:
+                # Collaborative filtering — user-based Jaccard
+                recommended_movies = list(Movie.get_recommendations_for_user(request.user, limit=12))
+
+                # Content-based — needs at least 2 interactions, weighted by recency.
+                # Exclude anything already shown in collaborative results.
+                recommended_ids = {m.id for m in recommended_movies}
+                content_based_candidates = list(
+                    Movie.get_content_based_recommendations(request.user, limit=24, min_interactions=2)
+                )
+                content_based_movies = [
+                    m for m in content_based_candidates
+                    if m.id not in recommended_ids
+                ][:12]
+
+        return render(request, 'home/homepage.html', {
+            'movies': recent_movies,
+            'trending_movies': trending_movies,
+            'recommended_movies': recommended_movies,
+            'content_based_movies': content_based_movies,
+            'is_new_user': is_new_user,
+            'user_watchlist_ids': user_watchlist_ids,
+            'user_favorite_ids': user_favorite_ids,
+        })
+
+    except Exception as e:
+        logger.error(f"Error loading home page: {str(e)}")
+        messages.error(request, "Unable to load movies. Please refresh the page.")
+        return render(request, 'home/homepage.html', {
+            'movies': [],
+            'trending_movies': [],
+            'recommended_movies': [],
+            'content_based_movies': [],
+            'is_new_user': False,
+            'user_watchlist_ids': [],
+            'user_favorite_ids': [],
+        })
+
+
+# -----------------------------------------------------------------------
+# User-Facing Pages
+# -----------------------------------------------------------------------
 
 @login_required(login_url='/')
 def search_view(request):
@@ -168,7 +244,9 @@ def search_view(request):
 @login_required(login_url='/')
 def watchlist_view(request):
     try:
-        watchlist_items = Watchlist.objects.filter(user=request.user).select_related('movie').prefetch_related('movie__genres', 'movie__language')
+        watchlist_items = Watchlist.objects.filter(
+            user=request.user
+        ).select_related('movie').prefetch_related('movie__genres', 'movie__language')
         movies = [item.movie for item in watchlist_items]
         return render(request, 'home/watchlist.html', {
             'movies': movies,
@@ -183,11 +261,12 @@ def watchlist_view(request):
 @login_required(login_url='/')
 def profile_view(request):
     try:
-        from movies.models import Favorite, Review
+        from movies.models import Review
         watch_count = WatchHistory.objects.filter(user=request.user).count()
-        favorites = Favorite.objects.filter(user=request.user).select_related('movie').prefetch_related('movie__genres').order_by('-added_on')
+        favorites = Favorite.objects.filter(
+            user=request.user
+        ).select_related('movie').prefetch_related('movie__genres').order_by('-added_on')
 
-        # Attach user's own review to each favorite
         fav_list = []
         for fav in favorites:
             review = Review.objects.filter(user=request.user, movie=fav.movie).first()
@@ -207,7 +286,9 @@ def profile_view(request):
 @login_required(login_url='/')
 def watch_history_view(request):
     try:
-        watch_history = WatchHistory.objects.filter(user=request.user).select_related('movie').order_by('-watched_at')
+        watch_history = WatchHistory.objects.filter(
+            user=request.user
+        ).select_related('movie').order_by('-watched_at')
         return render(request, 'home/watch_history.html', {
             'watch_history': watch_history
         })
@@ -221,13 +302,11 @@ def watch_history_view(request):
 def edit_profile_view(request):
     try:
         if request.method == 'POST':
-            # Update user information
             user = request.user
             user.first_name = request.POST.get('first_name', '').strip()
-            user.last_name = request.POST.get('last_name', '').strip()
-            user.email = request.POST.get('email', '').strip()
-            
-            # Check if username is being changed and if it's available
+            user.last_name  = request.POST.get('last_name', '').strip()
+            user.email      = request.POST.get('email', '').strip()
+
             new_username = request.POST.get('username', '').strip()
             if new_username != user.username:
                 from django.contrib.auth.models import User
@@ -235,11 +314,11 @@ def edit_profile_view(request):
                     messages.error(request, "Username already exists. Please choose a different one.")
                     return render(request, 'home/edit_profile.html')
                 user.username = new_username
-            
+
             user.save()
             messages.success(request, "Profile updated successfully!")
             return redirect('profile')
-        
+
         return render(request, 'home/edit_profile.html')
     except Exception as e:
         logger.error(f"Error in edit_profile_view: {str(e)}")
@@ -247,146 +326,55 @@ def edit_profile_view(request):
         return render(request, 'home/edit_profile.html')
 
 
-def get_recommended_movies(user, min_interactions=1):
-    """
-    Get personalized movie recommendations using collaborative filtering.
-    
-    Args:
-        user: The user to get recommendations for
-        min_interactions: Minimum number of interactions user must have before getting recommendations
-    """
-    if not user.is_authenticated:
-        return []
-    
-    # Check if user has enough interactions
-    interaction_count = UserInteraction.objects.filter(user=user).count()
-    if interaction_count < min_interactions:
-        return None  # Indicates new user
-    
-    # Use the collaborative filtering method from Movie model
-    recommended_movies = Movie.get_recommendations_for_user(user, limit=12)
-    
-    return list(recommended_movies)
-
-
-def home_page(request):
-    try:
-
-        recent_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').order_by('-id')[:8]
-        
-    
-        trending_movies = Movie.objects.filter(is_published=True).select_related('language').prefetch_related('genres').order_by('-views')[:8]
-        
-        
-        recommended_movies = None
-        is_new_user = False
-        
-        if request.user.is_authenticated:
-            
-            recommended_movies = get_recommended_movies(request.user, min_interactions=1)
-            if recommended_movies is None:
-                
-                is_new_user = True
-                recommended_movies = []
-        
-        return render(request, 'home/homepage.html', {
-            'movies': recent_movies,
-            'trending_movies': trending_movies,
-            'recommended_movies': recommended_movies,
-            'is_new_user': is_new_user,
-        })
-    except Exception as e:
-        logger.error(f"Error loading home page: {str(e)}")
-        messages.error(request, "Unable to load movies. Please refresh the page.")
-        return render(request, 'home/homepage.html', {
-            'movies': [], 
-            'trending_movies': [],
-            'recommended_movies': [],
-            'is_new_user': False,
-        })
-
-
-def homepage_view(request):
-    try:
-        user_watchlist_ids = []
-        user_favorite_ids = []
-        if request.user.is_authenticated:
-            user_watchlist_ids = list(Watchlist.objects.filter(user=request.user).values_list('movie_id', flat=True))
-            user_favorite_ids = list(Favorite.objects.filter(user=request.user).values_list('movie_id', flat=True))
-        return render(request, 'home/homepage.html', {
-            'user_watchlist_ids': user_watchlist_ids,
-            'user_favorite_ids': user_favorite_ids,
-        })
-    except Exception as e:
-        logger.error(f"Error in homepage_view: {str(e)}")
-        messages.error(request, "Unable to load homepage.")
-        return render(request, 'home/homepage.html', {'user_watchlist_ids': [], 'user_favorite_ids': []})
-
-
+# -----------------------------------------------------------------------
+# Search API
+# -----------------------------------------------------------------------
 
 @login_required(login_url='/')
 def search_movies_api(request):
-    """
-    Optional API endpoint for searching movies via AJAX.
-    This allows backend filtering instead of client-side only.
-    """
     try:
-        query = request.GET.get('q', '').strip()
+        query    = request.GET.get('q', '').strip()
         language = request.GET.get('language', '')
-        genres = request.GET.getlist('genres[]')
-        
-        
+        genres   = request.GET.getlist('genres[]')
+
         movies = Movie.objects.filter(is_published=True)
-        
-    
+
         if query:
             movies = movies.filter(
                 Q(title__icontains=query) |
                 Q(description__icontains=query) |
                 Q(cast__icontains=query)
             )
-        
-        
+
         if language:
             movies = movies.filter(language__name=language)
-        
-        
+
         if genres:
             for genre in genres:
                 movies = movies.filter(genres__name__icontains=genre)
-        
-        
+
         movies = movies.select_related('language').prefetch_related('genres').distinct()[:50]
-        
-        
+
         data = [{
-            'id': movie.id,
-            'title': movie.title,
-            'year': movie.year,
+            'id':          movie.id,
+            'title':       movie.title,
+            'year':        movie.year,
             'description': movie.description or '',
-            'thumbnail': movie.thumbnail.url if movie.thumbnail else '',
-            'video': movie.video.url if movie.video else '',
-            'genres': movie.get_genres_display(),
-            'language': movie.language.name if movie.language else 'Unknown',
-            'cast': movie.cast or '',
-            'rating': float(movie.review_stars) if hasattr(movie, 'review_stars') else 0.0,
-            'views': movie.views if hasattr(movie, 'views') else 0,
-            'length': movie.movie_length if hasattr(movie, 'movie_length') else 'Unknown',
+            'thumbnail':   movie.thumbnail.url if movie.thumbnail else '',
+            'video':       movie.video.url if movie.video else '',
+            'genres':      movie.get_genres_display(),
+            'language':    movie.language.name if movie.language else 'Unknown',
+            'cast':        movie.cast or '',
+            'rating':      float(movie.review_stars),
+            'views':       movie.views,
+            'length':      movie.movie_length,
         } for movie in movies]
-        
-        return JsonResponse({
-            'status': 'success',
-            'count': len(data),
-            'movies': data
-        })
-        
+
+        return JsonResponse({'status': 'success', 'count': len(data), 'movies': data})
+
     except Exception as e:
         logger.error(f"Error in search_movies_api: {str(e)}")
-        return JsonResponse({
-            'status': 'error',
-            'message': 'An error occurred while searching movies.'
-        }, status=500)
-
+        return JsonResponse({'status': 'error', 'message': 'An error occurred while searching movies.'}, status=500)
 
 
 # -----------------------------------------------------------------------
@@ -394,7 +382,6 @@ def search_movies_api(request):
 # -----------------------------------------------------------------------
 
 def _generate_signature(total_amount, transaction_uuid, product_code):
-    """HMAC-SHA256 signature required by eSewa v2."""
     message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
     sig = hmac.new(
         ESEWA_SECRET_KEY.encode('utf-8'),
@@ -405,14 +392,12 @@ def _generate_signature(total_amount, transaction_uuid, product_code):
 
 
 def _callback_base(request):
-    """Return the base URL for eSewa callbacks."""
     if ESEWA_CALLBACK_BASE:
         return ESEWA_CALLBACK_BASE.rstrip('/')
     return request.build_absolute_uri('/').rstrip('/')
 
 
 def _check_esewa_status(transaction_uuid, total_amount):
-    """Query eSewa v2 status API. Returns (status_str, ref_id)."""
     try:
         url = (
             f"{ESEWA_STATUS_URL}"
@@ -435,12 +420,11 @@ def _check_esewa_status(transaction_uuid, total_amount):
 
 @login_required(login_url='/')
 def payment_view(request):
-    # Already paid — go straight to dashboard
     if Payment.objects.filter(user=request.user, status='completed').exists():
         return redirect('home')
 
     if request.method == 'POST':
-        transaction_uuid = uuid.uuid4().hex  # no hyphens — eSewa v2 requirement
+        transaction_uuid = uuid.uuid4().hex
 
         Payment.objects.create(
             user=request.user,
@@ -452,18 +436,18 @@ def payment_view(request):
         base = _callback_base(request)
 
         esewa_config = {
-            'amount':                   SUBSCRIPTION_AMOUNT,
-            'tax_amount':               '0',
-            'total_amount':             SUBSCRIPTION_AMOUNT,
-            'transaction_uuid':         transaction_uuid,
-            'product_code':             ESEWA_MERCHANT_CODE,
-            'product_service_charge':   '0',
-            'product_delivery_charge':  '0',
-            'success_url':              f"{base}/payment/success/",
-            'failure_url':              f"{base}/payment/failure/",
-            'signed_field_names':       'total_amount,transaction_uuid,product_code',
-            'signature':                signature,
-            'esewa_url':                ESEWA_PAYMENT_URL,
+            'amount':                  SUBSCRIPTION_AMOUNT,
+            'tax_amount':              '0',
+            'total_amount':            SUBSCRIPTION_AMOUNT,
+            'transaction_uuid':        transaction_uuid,
+            'product_code':            ESEWA_MERCHANT_CODE,
+            'product_service_charge':  '0',
+            'product_delivery_charge': '0',
+            'success_url':             f"{base}/payment/success/",
+            'failure_url':             f"{base}/payment/failure/",
+            'signed_field_names':      'total_amount,transaction_uuid,product_code',
+            'signature':               signature,
+            'esewa_url':               ESEWA_PAYMENT_URL,
         }
 
         return render(request, 'home/payment_redirect.html', {'esewa_config': esewa_config})
@@ -473,14 +457,11 @@ def payment_view(request):
 
 @csrf_exempt
 def payment_success_view(request):
-    """
-    eSewa v2 redirects here with ?data=<base64-encoded-json> after payment.
-    """
     raw = request.GET.get('data') or request.POST.get('data')
 
     if raw:
         try:
-            response_data = json.loads(base64.b64decode(raw).decode('utf-8'))
+            response_data    = json.loads(base64.b64decode(raw).decode('utf-8'))
             transaction_uuid = response_data.get('transaction_uuid')
             status           = response_data.get('status')
             ref_id           = response_data.get('transaction_code', '')
@@ -500,7 +481,6 @@ def payment_success_view(request):
                 payment.esewa_ref_id = ref_id
                 payment.save()
 
-                # Re-authenticate user if session was lost during eSewa redirect
                 if not request.user.is_authenticated:
                     user = payment.user
                     user.backend = 'django.contrib.auth.backends.ModelBackend'
@@ -510,7 +490,6 @@ def payment_success_view(request):
                 return redirect('home')
 
             else:
-                # Status is not COMPLETE — double-check with eSewa API
                 esewa_status, api_ref = _check_esewa_status(transaction_uuid, SUBSCRIPTION_AMOUNT)
                 if esewa_status == 'COMPLETE':
                     payment.status       = 'completed'
@@ -541,7 +520,6 @@ def payment_failure_view(request):
 
 @login_required(login_url='/')
 def verify_payment_status(request, transaction_uuid):
-    """Manual re-verification endpoint (called by frontend polling if needed)."""
     try:
         payment = Payment.objects.get(transaction_id=transaction_uuid, user=request.user)
 
@@ -627,7 +605,6 @@ def help_view(request):
 def contact_view(request):
     sent = False
     if request.method == 'POST':
-        # In production connect this to an email backend
         sent = True
     return render(request, 'home/contact.html', {'sent': sent})
 
