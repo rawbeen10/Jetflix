@@ -1,179 +1,46 @@
 ================================================================================
-  JETFLIX — PSEUDOCODE FOR CORE RECOMMENDATION ALGORITHMS
+  JETFLIX — PSEUDOCODE
 ================================================================================
 
 
 ────────────────────────────────────────────────────────────────────────────────
-1. JACCARD SIMILARITY  (used to measure user-user and item-item similarity)
+1. JACCARD SIMILARITY  (Collaborative Filtering)
 ────────────────────────────────────────────────────────────────────────────────
 
-FUNCTION jaccard_similarity(set_A, set_B):
+FUNCTION get_recommendations(target_user):
 
-    intersection = elements that exist in BOTH set_A AND set_B
-    union        = all elements that exist in EITHER set_A OR set_B
-
-    IF union is empty:
-        RETURN 0
-
-    RETURN |intersection| / |union|
-
-EXAMPLE (user similarity):
-    User A watched: {Movie1, Movie2, Movie3, Movie4}
-    User B watched: {Movie2, Movie3, Movie5}
-
-    intersection = {Movie2, Movie3}         → size = 2
-    union        = {Movie1, Movie2, Movie3, Movie4, Movie5} → size = 5
-
-    jaccard(A, B) = 2 / 5 = 0.4
-
-    Score ranges from 0 (no overlap) to 1 (identical watch history)
-
-EXAMPLE (item similarity):
-    Movie X viewers: {User1, User2, User3}
-    Movie Y viewers: {User2, User3, User4}
-
-    jaccard(X, Y) = |{User2, User3}| / |{User1, User2, User3, User4}|
-                  = 2 / 4 = 0.5
-
-
-────────────────────────────────────────────────────────────────────────────────
-2. USER-BASED COLLABORATIVE FILTERING
-   (Movie.get_recommendations_for_user — movies/models.py)
-────────────────────────────────────────────────────────────────────────────────
-
-FUNCTION get_recommendations_for_user(target_user, limit=6):
-
-    // Step 1 — Get target user's interaction history
-    user_movies = set of movie IDs target_user has interacted with
+    user_movies = movies target_user has watched
 
     IF user_movies is empty:
-        RETURN top movies by (rating DESC, views DESC)   // cold start fallback
+        RETURN popular movies sorted by rating, views
 
-    // Step 2 — Find similar users using shared interactions (Jaccard-like)
-    similar_users = []
+    FOR each other_user:
+        common  = movies watched by BOTH users
+        jaccard = |common| / |user_movies ∪ other_movies|
+        IF jaccard > 0: add to similar_users
 
-    FOR each other_user in all users EXCEPT target_user:
-        other_movies   = set of movie IDs other_user has interacted with
-        common_movies  = |user_movies ∩ other_movies|
+    similar_users = SORT by jaccard DESC, TAKE top 20
 
-        IF common_movies >= 1:
-            similarity_score = common_movies   // proxy for Jaccard numerator
-            similar_users.append((other_user, similarity_score))
+    FOR each similar_user:
+        FOR each movie they watched NOT in user_movies:
+            candidate_score[movie] += 1
 
-    similar_users = SORT by similarity_score DESC, TAKE top 20
-
-    IF similar_users is empty:
-        GOTO genre-based fallback (Step 4)
-
-    // Step 3 — Score candidate movies
-    candidate_scores = {}
-
-    FOR each (similar_user, score) in similar_users:
-        FOR each movie in similar_user's interactions:
-            IF movie NOT in user_movies:
-                candidate_scores[movie] += 1   // count of similar users who watched it
-
-    recommended = SORT candidate_scores by value DESC
-                  THEN by rating DESC, views DESC
-                  TAKE top limit
-
-    // Step 4 — Genre-based fallback (pad if not enough results)
-    IF count(recommended) < limit:
-        user_genres = genres of movies in user_movies
-
-        genre_based = published movies
-                      WHERE genres OVERLAP user_genres
-                      AND   movie NOT in user_movies
-                      AND   movie NOT already in recommended
-                      ORDER BY rating DESC, views DESC
-                      LIMIT (limit - count(recommended))
-
-        recommended = recommended + genre_based
-
-    RETURN recommended
+    RETURN top movies by candidate_score DESC
 
 
 ────────────────────────────────────────────────────────────────────────────────
-3. ITEM-BASED COLLABORATIVE FILTERING
-   (Movie.get_similar_movies — movies/models.py)
+2. GENRE-BASED FILTERING  (Fallback + Search)
 ────────────────────────────────────────────────────────────────────────────────
 
-FUNCTION get_similar_movies(target_movie, limit=6):
+FUNCTION genre_filter(user_movies, selected_genres):
 
-    // Step 1 — Get users who interacted with target movie
-    target_viewers = set of user IDs who interacted with target_movie
+    user_genres = all genres from user_movies
 
-    IF target_viewers is empty:
-        GOTO genre-based fallback
-
-    // Step 2 — Score other movies by Jaccard-like co-interaction count
-    candidate_scores = {}
-
-    FOR each other_movie in all published movies EXCEPT target_movie:
-        other_viewers    = set of user IDs who interacted with other_movie
-        common_viewers   = |target_viewers ∩ other_viewers|
-
-        IF common_viewers > 0:
-            // Full Jaccard:
-            // jaccard = common_viewers / |target_viewers ∪ other_viewers|
-            // JetFlix uses common_viewers count as the score (Jaccard numerator)
-            candidate_scores[other_movie] = common_viewers
-
-    similar = SORT candidate_scores by value DESC
-              THEN by rating DESC
-              TAKE top limit
-
-    // Genre-based fallback
-    IF similar is empty:
-        similar = published movies
-                  WHERE genres OVERLAP target_movie.genres
-                  EXCLUDE target_movie
-                  LIMIT limit
-
-    RETURN similar
-
-
-────────────────────────────────────────────────────────────────────────────────
-4. GENRE-BASED FILTERING
-   (used as fallback in both recommendation functions + search filter)
-────────────────────────────────────────────────────────────────────────────────
-
-FUNCTION genre_based_recommendations(user_movies, exclude_ids, limit):
-
-    // Build user genre profile
-    user_genres = set()
-    FOR each movie in user_movies:
-        user_genres = user_genres ∪ movie.genres
-
-    // Score candidate movies by genre overlap
-    candidates = []
-
-    FOR each published movie NOT in exclude_ids:
+    FOR each published movie NOT already watched:
         overlap = |movie.genres ∩ user_genres|
-        IF overlap > 0:
-            candidates.append((movie, overlap))
+        IF overlap > 0: add to results
 
-    candidates = SORT by (overlap DESC, rating DESC, views DESC)
-    RETURN top limit candidates
+    RETURN results sorted by overlap DESC, rating DESC
 
 
-FUNCTION genre_filter_search(selected_genres, all_movies):
-
-    // Hard filter — movie must contain ALL selected genres (AND logic)
-    results = []
-
-    FOR each movie in all_movies:
-        match = TRUE
-        FOR each genre in selected_genres:
-            IF genre NOT in movie.genres:
-                match = FALSE
-                BREAK
-        IF match:
-            results.append(movie)
-
-    RETURN results
-
-
-================================================================================
-  END OF PSEUDOCODE DOCUMENT
 ================================================================================
