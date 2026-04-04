@@ -190,7 +190,11 @@ def home_page(request):
                 is_new_user = True
             else:
                 # Collaborative filtering — user-based Jaccard
-                recommended_movies = list(Movie.get_recommendations_for_user(request.user, limit=12))
+                recommended_movies = sorted(
+                    list(Movie.get_recommendations_for_user(request.user, limit=12)),
+                    key=lambda m: m.id,
+                    reverse=True
+                )
 
                 # Content-based — needs at least 2 interactions, weighted by recency.
                 # Exclude anything already shown in collaborative results.
@@ -198,10 +202,11 @@ def home_page(request):
                 content_based_candidates = list(
                     Movie.get_content_based_recommendations(request.user, limit=24, min_interactions=2)
                 )
-                content_based_movies = [
-                    m for m in content_based_candidates
-                    if m.id not in recommended_ids
-                ][:12]
+                content_based_movies = sorted(
+                    [m for m in content_based_candidates if m.id not in recommended_ids][:12],
+                    key=lambda m: m.id,
+                    reverse=True
+                )
 
         return render(request, 'home/homepage.html', {
             'movies': recent_movies,
