@@ -26,6 +26,16 @@ class CustomUserCreationForm(UserCreationForm):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email__iexact=email).exists():
             raise ValidationError('An account with this email already exists.')
+        # Proper format check
+        import re
+        pattern = r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$'
+        if not re.match(pattern, email):
+            raise ValidationError('Enter a valid email address (e.g. name@example.com).')
+        local, domain = email.split('@', 1)
+        if '..' in email:
+            raise ValidationError('Email address cannot contain consecutive dots.')
+        if local.startswith('.') or local.endswith('.'):
+            raise ValidationError('Email local part cannot start or end with a dot.')
         return email
 
     def clean_password1(self):

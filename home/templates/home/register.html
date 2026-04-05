@@ -215,7 +215,7 @@
                 <div class="error-message">{{ form.non_field_errors.0 }}</div>
             {% endif %}
 
-            <form method="post">
+            <form method="post" novalidate>
                 {% csrf_token %}
                 
                 <div class="form-group">
